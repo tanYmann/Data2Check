@@ -1,0 +1,176 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Data2Check
+{
+
+    class DataTables
+    {
+        public DataTable Atradius = new DataTable();
+        public DataTable KundenTable = new DataTable("DU_Kunde");
+        public DataTable LieferantenTable = new DataTable("DU_Lieferant");
+        public DataTables()
+        {
+            KundenTable.Columns.Add("Kunde / Nummer des Kunden", typeof(string));
+            KundenTable.Columns.Add("Profitzentrum", typeof(string));
+            KundenTable.Columns.Add("Adressnummer", typeof(string));
+            KundenTable.Columns.Add("Name 1", typeof(string));
+            KundenTable.Columns.Add("Staat", typeof(string));
+            KundenTable.Columns.Add("Ort", typeof(string));
+            KundenTable.Columns.Add("Suchbegriff im Adressenstamm", typeof(string));
+            KundenTable.Columns.Add("Selektion im Adressenstamm", typeof(string));
+            KundenTable.Columns.Add("Briefanrede", typeof(string));
+            KundenTable.Columns.Add("Anrede", typeof(string));
+            KundenTable.Columns.Add("Titel", typeof(string));
+            KundenTable.Columns.Add("Vorname", typeof(string));
+            KundenTable.Columns.Add("Name 2", typeof(string));
+            KundenTable.Columns.Add("Name 3", typeof(string));
+            KundenTable.Columns.Add("Postleitzahl", typeof(string));
+            KundenTable.Columns.Add("Prefix Ort", typeof(string));
+            KundenTable.Columns.Add("Postfix Ort", typeof(string));
+            KundenTable.Columns.Add("Prefix Straße", typeof(string));
+            KundenTable.Columns.Add("Strasse", typeof(string));
+            KundenTable.Columns.Add("Postfix Straße", typeof(string));
+            KundenTable.Columns.Add("Hausnummer", typeof(string));
+            KundenTable.Columns.Add("Bundesland", typeof(string));
+            KundenTable.Columns.Add("PLZ des Postfachs", typeof(string));
+            KundenTable.Columns.Add("Postfach", typeof(string));
+            KundenTable.Columns.Add("Telefonbuch / Adresse sichtbar im zentralen Telefonbuch", typeof(string));
+            KundenTable.Columns.Add("EMail", typeof(string));
+            KundenTable.Columns.Add("HomePage", typeof(string));
+            KundenTable.Columns.Add("Handy", typeof(string));
+            KundenTable.Columns.Add("Telefon", typeof(string));
+            KundenTable.Columns.Add("Telefax", typeof(string));
+            KundenTable.Columns.Add("Autotelefon", typeof(string));
+            KundenTable.Columns.Add("Suchbegriff im Kundenstamm", typeof(string));
+            KundenTable.Columns.Add("Selektion im Kundenstamm", typeof(string));
+            KundenTable.Columns.Add("Verteilergruppe", typeof(string));
+            KundenTable.Columns.Add("Branche", typeof(string));
+            KundenTable.Columns.Add("Region", typeof(string));
+            KundenTable.Columns.Add("Sachbearbeiter / Person aus dem Benutzerstamm", typeof(string));
+            KundenTable.Columns.Add("Sprache", typeof(string));
+            KundenTable.Columns.Add("ABC-Klasse", typeof(string));
+            KundenTable.Columns.Add("Teilestatistik", typeof(string));
+            KundenTable.Columns.Add("Webshop", typeof(string));
+            KundenTable.Columns.Add("b2b-Bestandsfaktor", typeof(string));
+            KundenTable.Columns.Add("b2b-Lagerort", typeof(string));
+            KundenTable.Columns.Add("Kunde seit", typeof(string));
+            KundenTable.Columns.Add("eigenen Lieferantennummer beim Kunden", typeof(string));
+            KundenTable.Columns.Add("inländische Steuernummer", typeof(string));
+            KundenTable.Columns.Add("Währung", typeof(string));
+            KundenTable.Columns.Add("Umsatzsteuer-Identifikationsnummer", typeof(string));
+            KundenTable.Columns.Add("RechnungsIntervall", typeof(string));
+            KundenTable.Columns.Add("Sammelrechnung", typeof(string));
+            KundenTable.Columns.Add("Rechnung geht an einen anderen Kunden / Kundennummer", typeof(string));    //50
+            KundenTable.Columns.Add("Konzern", typeof(string));
+            KundenTable.Columns.Add("Bezeichnung des Konzerns", typeof(string));
+            KundenTable.Columns.Add("Verband", typeof(string));
+            KundenTable.Columns.Add("Bezeichnung des Verbandes", typeof(string));
+            KundenTable.Columns.Add("Kennzeichnung des Verbandes als Mahnempfaenger", typeof(string));
+            KundenTable.Columns.Add("Kennzeichnung des Verbandes als Zahlungsregulierer", typeof(string));
+            KundenTable.Columns.Add("MitgliedsNr Verb", typeof(string));
+            KundenTable.Columns.Add("Verband mahnen", typeof(string));
+            KundenTable.Columns.Add("Relevant für Zinsrechnung", typeof(string));
+            KundenTable.Columns.Add("Steuergruppe (Inland) mit Steuer", typeof(string));
+            KundenTable.Columns.Add("Steuergruppe (Inland) ohne Steuer", typeof(string));
+            KundenTable.Columns.Add("Steuergruppe EU mit Steuer", typeof(string));
+            KundenTable.Columns.Add("Steuergruppe EU ohne Steuer", typeof(string));
+            KundenTable.Columns.Add("Steuergruppe Ausland mit Steuer", typeof(string));
+            KundenTable.Columns.Add("Steuergruppe Ausland ohne Steuer", typeof(string));
+            KundenTable.Columns.Add("Zahlungsart", typeof(string));
+            KundenTable.Columns.Add("Zahlungsavis", typeof(string));
+            KundenTable.Columns.Add("Zahlungsziel", typeof(string));
+            KundenTable.Columns.Add("Kreditlimit", typeof(string));
+            KundenTable.Columns.Add("Kreditlimit überwachen", typeof(string));
+            KundenTable.Columns.Add("Mahnverfahren", typeof(string));
+            KundenTable.Columns.Add("Mindestmahnbetrag", typeof(string));
+            KundenTable.Columns.Add("Verzugstage", typeof(string));
+            KundenTable.Columns.Add("Verzugstage sind gültig ab", typeof(string));
+            KundenTable.Columns.Add("Verzugstage wurden manuell erfasst", typeof(string));
+            KundenTable.Columns.Add("Versandart", typeof(string));
+            KundenTable.Columns.Add("Lieferbedingung", typeof(string));
+            KundenTable.Columns.Add("Lieferrestriktion", typeof(string));
+            KundenTable.Columns.Add("Vertragsnummer der Warenkreditversicherung", typeof(string));
+            KundenTable.Columns.Add("Risikonummer der Warenkreditversicherung", typeof(string));
+            KundenTable.Columns.Add("Kreditlimit der Warenkreditversicherung", typeof(string));
+            KundenTable.Columns.Add("Kennzeichen der Warenkreditversicherung", typeof(string));
+            KundenTable.Columns.Add("Letzte Auskunde der Warenkreditversicherung", typeof(string));
+            KundenTable.Columns.Add("Preisliste", typeof(string));
+            KundenTable.Columns.Add("Kunderabattgruppe", typeof(string));
+            KundenTable.Columns.Add("Rabattart sichtbar", typeof(string));
+            KundenTable.Columns.Add("Fracht skontofähig", typeof(string));
+            KundenTable.Columns.Add("Zuschlag Skonto", typeof(string));
+            KundenTable.Columns.Add("Zustand beim Kunden", typeof(string));
+            KundenTable.Columns.Add("Anzahl der auszudruckenden Rechnungen + Kopien", typeof(string));  //90
+            KundenTable.Columns.Add("Anzahl der auszudruckenden Lieferscheine + Kopien", typeof(string));
+            KundenTable.Columns.Add("Nr. des Sammelkontos", typeof(string));
+            KundenTable.Columns.Add("bestätigt", typeof(string));
+            LieferantenTable.Columns.Add("Lieferant / Nummer des Lieferanten", typeof(string));
+            LieferantenTable.Columns.Add("Adressnummer", typeof(string));
+            LieferantenTable.Columns.Add("Name 1", typeof(string));
+            LieferantenTable.Columns.Add("Staat", typeof(string));
+            LieferantenTable.Columns.Add("Ort", typeof(string));
+            LieferantenTable.Columns.Add("Suchbegriff im Adressenstamm", typeof(string));
+            LieferantenTable.Columns.Add("Selektion im Adressenstamm", typeof(string));
+            LieferantenTable.Columns.Add("Briefanrede", typeof(string));
+            LieferantenTable.Columns.Add("Anrede", typeof(string));
+            LieferantenTable.Columns.Add("Titel", typeof(string));
+            LieferantenTable.Columns.Add("Vorname", typeof(string));
+            LieferantenTable.Columns.Add("Name 2", typeof(string));
+            LieferantenTable.Columns.Add("Name 3", typeof(string));
+            LieferantenTable.Columns.Add("Postleitzahl", typeof(string));
+            LieferantenTable.Columns.Add("Prefix Ort", typeof(string));
+            LieferantenTable.Columns.Add("Postfix Ort", typeof(string));
+            LieferantenTable.Columns.Add("Prefix Straße", typeof(string));
+            LieferantenTable.Columns.Add("Strasse", typeof(string));
+            LieferantenTable.Columns.Add("Postfix Straße", typeof(string));
+            LieferantenTable.Columns.Add("Hausnummer", typeof(string));
+            LieferantenTable.Columns.Add("Bundesland", typeof(string));
+            LieferantenTable.Columns.Add("PLZ des Postfachs", typeof(string));
+            LieferantenTable.Columns.Add("Postfach", typeof(string));
+            LieferantenTable.Columns.Add("Telefonbuch / Adresse sichtbar im zentralen Telefonbuch", typeof(string));
+            LieferantenTable.Columns.Add("EMail", typeof(string));
+            LieferantenTable.Columns.Add("HomePage", typeof(string));
+            LieferantenTable.Columns.Add("Handy", typeof(string));
+            LieferantenTable.Columns.Add("Telefon", typeof(string));
+            LieferantenTable.Columns.Add("Telefax", typeof(string));
+            LieferantenTable.Columns.Add("Autotelefon", typeof(string));
+            LieferantenTable.Columns.Add("Suchbegriff im Lieferantenstamm", typeof(string));
+            LieferantenTable.Columns.Add("Selektion im Lieferantenstamm", typeof(string));
+            LieferantenTable.Columns.Add("Verteilergruppe", typeof(string));
+            LieferantenTable.Columns.Add("Branche", typeof(string));
+            LieferantenTable.Columns.Add("Betriebskalender", typeof(string));
+            LieferantenTable.Columns.Add("Sachbearbeiter / Person aus dem Benutzerstamm", typeof(string));
+            LieferantenTable.Columns.Add("Sprache", typeof(string));
+            LieferantenTable.Columns.Add("ABC - Klasse", typeof(string));
+            LieferantenTable.Columns.Add("eigenen Kundennummer beim Lieferanten", typeof(string));
+            LieferantenTable.Columns.Add("inländische Steuernummer", typeof(string));
+            LieferantenTable.Columns.Add("Währung", typeof(string));
+            LieferantenTable.Columns.Add("Umsatzsteuer - Identifikationsnummer", typeof(string));
+            LieferantenTable.Columns.Add("Zahlungsart", typeof(string));
+            LieferantenTable.Columns.Add("Zahlungsavis", typeof(string));
+            LieferantenTable.Columns.Add("Zahlungsziel", typeof(string));
+            LieferantenTable.Columns.Add("Kreditlimit", typeof(string));
+            LieferantenTable.Columns.Add("Steuergruppe(Inland) mit Steuer", typeof(string));
+            LieferantenTable.Columns.Add("Steuergruppe(Inland) ohne Steuer", typeof(string));
+            LieferantenTable.Columns.Add("Steuergruppe EU mit Steuer", typeof(string));
+            LieferantenTable.Columns.Add("Steuergruppe EU ohne Steuer", typeof(string));
+            LieferantenTable.Columns.Add("Steuergruppe Ausland mit Steuer", typeof(string));
+            LieferantenTable.Columns.Add("Steuergruppe Ausland ohne Steuer", typeof(string));
+            LieferantenTable.Columns.Add("Lieferbedingung", typeof(string));
+            LieferantenTable.Columns.Add("Versandart", typeof(string));
+            LieferantenTable.Columns.Add("Mindestbestellwert", typeof(string));
+            LieferantenTable.Columns.Add("Zustand beim Lieferanten", typeof(string));
+            LieferantenTable.Columns.Add("Anzahl der auszudruckenden Bestellungen +Kopien", typeof(string));
+            LieferantenTable.Columns.Add("Nr.des Sammelkontos", typeof(string));
+            LieferantenTable.Columns.Add("bestätigt", typeof(string));
+        }
+
+
+
+    }
+}
