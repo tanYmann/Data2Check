@@ -27,17 +27,13 @@ namespace Data2Check
         public DataTable GetLieferanten(string datum, OdbcConnection connection, string standort)
         {
             DataTable resultTable = new DataTable("DU_Lieferant");
-
-            if (connection.State != ConnectionState.Open)
+            using (OdbcCommand command = new OdbcCommand(LieferantenString(datum, standort), connection))
             {
-                connection.Open();
+                resultTable = WriteTable(command, resultTable, DataTables.LieferantenTable,connection);
             }
-
-            OdbcCommand command = new OdbcCommand(KundenString(datum, standort), connection);
-            resultTable = WriteTable(command, resultTable, DataTables.LieferantenTable);
-
             return resultTable;
         }
+
 
         // DataTable der Kunden seit 'datum'
         public DataTable GetKunden(string datum, OdbcConnection connection, string standort)
@@ -46,13 +42,10 @@ namespace Data2Check
             foreach (DataColumn col in cloneTable.Columns) { col.ReadOnly = false; col.DataType = typeof(string); }
             DataTable resultTable = new DataTable("DU_Kunde");
 
-            if (connection.State != ConnectionState.Open)
+            using (OdbcCommand command = new OdbcCommand(KundenString(datum, standort), connection))
             {
-                connection.Open();
+                resultTable = WriteTable(command, resultTable, DataTables.KundenTable,connection);
             }
-
-            OdbcCommand command = new OdbcCommand(KundenString(datum, standort), connection);
-            resultTable = WriteTable(command, resultTable, DataTables.KundenTable);
 
             foreach (DataRow rowKd in resultTable.Rows)
             {
@@ -323,18 +316,58 @@ namespace Data2Check
             return cloneTable;
         }
 
+        // Kunden für transASCIIact
+        public DataTable GetKundenASCII(string query, OdbcConnection connection)
+        {
+            DataTable dataTable = new DataTable();
+            using (OdbcCommand command = new OdbcCommand(query, connection))
+            {
+                dataTable = WriteTable(command, dataTable, null,connection);
+            }
+            dataTable.TableName = "Kunden_ASCII";
+            return dataTable;
+
+        }
+
+        // Lieferanten für transASCIIact
+        public DataTable GetLieferantenASCII(string query,OdbcConnection connection)
+        {
+            DataTable dataTable = new DataTable();
+
+            using (OdbcCommand command = new OdbcCommand(query, connection))
+            {
+                dataTable = WriteTable(command, dataTable, null,connection);
+            }
+
+            dataTable.TableName = "Lieferanten_ASCII";
+            
+            return dataTable;
+        }
+
+        // DataTable der Belege für transASCIIact
+        public DataTable GetBelegeASCII(OdbcConnection connection)
+        {
+            DataTable dataTable = new DataTable();
+
+            using (OdbcCommand command = new OdbcCommand(BelegeString(), connection))
+            {
+                dataTable = WriteTable(command, dataTable, null,connection);
+            }
+
+            dataTable.TableName = "Belege_ASCII";
+            return dataTable;
+        }
+       
         //Methode zur Ausgabe einer .csv Datei, erstellt aus einer DataTable
         public void Table2CSV(DataTable table, string path, string preString)
         {
-            int i = 0;
-            string filePathtrue = path + preString + table.TableName + DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString() + DateTime.Now.Day.ToString() + ".csv";
+            string filePathtrue = path + preString + table.TableName +  ".csv";
             string cols = string.Empty;
             FileInfo pathFileInfo = new FileInfo(filePathtrue);
 
-            while (pathFileInfo.Exists)
+            if (pathFileInfo.Exists)
             {
-                pathFileInfo = new FileInfo(path + preString + table.TableName + DateTime.Now.Date.ToString() + i + ".csv");
-                i++;
+                pathFileInfo.Delete();
             }
 
             using (FileStream fsTrue = File.OpenWrite(pathFileInfo.FullName))
@@ -368,14 +401,18 @@ namespace Data2Check
         }
 
         // Methode zum Schreiben der Tabelle
-        public DataTable WriteTable(OdbcCommand command, DataTable table, DataTable columnTable)
+        public DataTable WriteTable(OdbcCommand command, DataTable table, DataTable columnTable,OdbcConnection connection)
         {
+            if(connection.State == ConnectionState.Closed)
+            {
+                connection.Open();
+            }
             string cmd = command.CommandText;
             DataSet dataSet = new DataSet();
             Type type = typeof(string);
             DataTable cachetable = new DataTable();
             command.CommandTimeout = 30;
-
+            
             using (OdbcDataReader dataReader = command.ExecuteReader())
             {
                 try
@@ -422,7 +459,6 @@ namespace Data2Check
 
             return clone;
         }
-
 
         // SQL-Abfrage Lieferanten
         protected string LieferantenString(string datum, string standort)
@@ -497,7 +533,7 @@ namespace Data2Check
                  "and kdn_aenderung > " + datum + " " +
                  //"and ans_x_nich_aktiv in ('N','') " +
                  //"and his_kdnlfdnr = kdn_lfdnr " +
-                 "order by kdn_kontonr";
+                 "group by kdn_kontonr";
             }
 
             if (standort == "2")
@@ -567,7 +603,84 @@ namespace Data2Check
                     "where ansnr = kdn_lfdnr " +
                     "and ans_typ = 'K' " +
                     "and kdn_info_001 not like ('gelöscht') " +
-                    "and kdn_info_001 not like ('gesperrt') ";
+                    "and kdn_info_001 not like ('gesperrt') " +
+                    "group by kdn_kontonr";
+            }
+
+            return query;
+        }
+        
+        //SQL-Abfrage Kunden transASCIIact
+        public string GetDataKunden(string standort)
+        {
+            string query = string.Empty;
+
+            
+            if (standort == "1")
+            {
+                query = "select " +
+                    "kdn_kontonr," +
+                    "kdn_zbnr," +
+                    "ans_ustid," +
+                    "kdn_ekvnr, " +
+                    "(select f1e_x_ekname from f1ekverband where f1e_x_eknr = kdn_ekvnr limit 1)  " +
+                    "from kunden,anschrift,historie " +
+                    "where kdn_lfdnr = ansnr " +
+                    "and kdn_lfdnr = his_kdnlfdnr " +
+                    "and his_redat >  20201231 " +
+                    "and kdn_typ = 'D' " +
+                    "group by kdn_kontonr ";
+            }
+            if (standort == "2")
+            {
+                query = "select " +
+                   "kdn_kontonr," +
+                   "kdn_zbnr," +
+                   "ans_ustid," +
+                   "kdn_ekvnr, " +
+                   "(select f1e_x_ekname from f1ekverband where f1e_x_eknr = kdn_ekvnr limit 1) " +
+                   "from kunden,anschrift " +
+                   "where kdn_lfdnr = ansnr " +
+                   "and kdn_typ = 'D' " +
+                   "group by kdn_kontonr ";
+            }
+
+            return query;
+        }
+
+        // SQL-Abfrage Lieferanten für transASCIIact
+        public string GetDataLieferanten(string standort)
+        {
+            
+            string query = string.Empty;
+
+            if (standort == "1")
+            {
+                query = "select " +
+                    "kdn_kontonr," +
+                    "kdn_zbnr," +
+                    "ans_ustid " +
+                    "from kunden,anschrift,historie " +
+                    "where kdn_lfdnr = ansnr " +
+                    "and his_kdnlfdnr = kdn_lfdnr " +
+                    "and kdn_kontonr not like ('82013') " +
+                    "and kdn_info_001 not like ('gelöscht') " +
+                    "and kdn_typ = 'K' " +
+                    "and his_redat > 20200331 " +
+                    "group by kdn_kontonr ";
+
+            }
+
+            if (standort == "2")
+            {
+                query = "select " +
+                    "kdn_kontonr," +
+                    "kdn_zbnr," +
+                    "ans_ustid " +
+                    "from kunden,anschrift " +
+                    "where kdn_lfdnr = ansnr " +
+                    "and kdn_typ = 'K' " +
+                    "group by kdn_kontonr ";
             }
 
             return query;
@@ -680,6 +793,7 @@ namespace Data2Check
                           "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +
                           "and (kunden.kdn_sperrkz = 0) " +
                           "and kdn_typ = 'D' " +
+                          "and kdn_aenderung > " +datum+" "+
                           "GROUP BY kdn_kontonr ";
             }
 
@@ -789,6 +903,21 @@ namespace Data2Check
                            "order BY kdn_kontonr ";
                     */
             }
+
+            return query;
+        }
+
+        // SQL-Abfrage Belege mit Zahlungsbedingung
+        protected string BelegeString()
+        {
+            string query = "select " +
+                "his_renr," +
+                "bel_zbnr " +
+                "from beleg,historie " +
+                "where bel_datum > 20230801 " +
+                "and bel_typ = 1 " +
+                "and his_belnr = bel_nr " +
+                "group by bel_nr";
 
             return query;
         }

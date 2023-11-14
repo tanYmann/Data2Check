@@ -6,12 +6,14 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Xml;
 
 namespace Data2Check
 {
     public class Operations
     {
+        public FileInfo FileInfoDate = new FileInfo(Directory.GetCurrentDirectory().ToString() + "\\LastDate.txt");
         public string Street { get; set; }
         public string HNr { get; set; }
         public string Date { get; set; }
@@ -35,10 +37,10 @@ namespace Data2Check
 
         public string GetLastDate()
         {
-            using (FileStream fstream = new FileStream(Environment.CurrentDirectory.ToString()+"\\LastDate.txt", FileMode.Open, FileAccess.Read))
+            using (FileStream fstream = new FileStream(Directory.GetCurrentDirectory().ToString()+"\\LastDate.txt", FileMode.Open, FileAccess.Read))
             using (StreamReader sreader = new StreamReader(fstream))
             {
-                Date = (int.Parse(sreader.ReadLine()) - 1).ToString();
+                Date = (long.Parse(sreader.ReadLine()) - 1).ToString();
             }
 
             return Date;
@@ -54,20 +56,17 @@ namespace Data2Check
             return datepart;
         }
 
-        public void SetLastDate()
+        public void SetLastDate(FileInfo info)
         {
-            using (FileStream fstream = new FileStream(Environment.CurrentDirectory.ToString()+"\\LastDate.txt", FileMode.Open, FileAccess.Write))
-            using (StreamWriter swriter = new StreamWriter(fstream))
+            using (FileStream fstream = info.OpenWrite())
+            using (StreamWriter writer = new StreamWriter(fstream))
             {
-                string year = DateTime.Now.Year.ToString();
-                string month = AddZero(DateTime.Now.Month.ToString());
-                string day = AddZero(DateTime.Now.Day.ToString());
-                Date = year + month + day;
-                swriter.BaseStream.Position = 0;
-                swriter.Write(Date);
+                writer.BaseStream.Position = 0;
+                writer.WriteLine(DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString() + DateTime.Now.Day.ToString());
+                    
             }
         }
-
+        
         // -----------------------------------------------Entfernen sämtlicher Leerzeichen in einem String
         public string RemoveWhiteSpace(string text)
         {
@@ -554,7 +553,6 @@ namespace Data2Check
                     }
 
                     Atradius.PrimaryKey = new DataColumn[] { Atradius.Columns[field[0]] };
-
                     count++;
                 }
                 else
@@ -575,7 +573,7 @@ namespace Data2Check
                     }
                     catch (Exception ex)
                     {
-
+                        MessageBox.Show(ex.Message);
                     }
                 }
 

@@ -14526,6 +14526,7 @@ namespace Data2Check
             { "-16", "-7021"}
         };
 
+        //Füllmengen Liste
         public List<string> fuellmengenList = new List<string>()
         {
             {"4407-01-0000-0"},
