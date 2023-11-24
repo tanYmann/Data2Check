@@ -62,7 +62,7 @@ namespace Data2Check
             using (StreamWriter writer = new StreamWriter(fstream))
             {
                 writer.BaseStream.Position = 0;
-                writer.WriteLine(DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString() + DateTime.Now.Day.ToString());
+                writer.WriteLine(DateTime.Now.Year.ToString() + AddZero(DateTime.Now.Month.ToString()) + AddZero(DateTime.Now.Day.ToString()));
                     
             }
         }
@@ -524,26 +524,21 @@ namespace Data2Check
         public void FillAtradius(DataTable Atradius)
         {
             int count = 0;
-
+            Atradius = new DataTable();
             string AtradiusFile = @"C:\Users\TanPat\source\repos\tanYmann\ODBCconnect\Atradius.csv";
-
             FileStream streamIn = new FileStream(AtradiusFile, FileMode.Open, FileAccess.Read);
-
             StreamReader sr = new StreamReader(streamIn);
-
             string[] field = new string[7];
-
+            
             while (!sr.EndOfStream)
             {
                 string line = sr.ReadLine();
-
                 field[0] = line.Split(';')[0];
                 field[1] = line.Split(';')[1];
                 field[2] = line.Split(';')[2];
                 field[3] = line.Split(';')[3];
                 field[4] = line.Split(';')[4];
                 field[5] = line.Split(';')[5];
-
 
                 if (count == 0)
                 {

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Data.Odbc;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Data2Check
@@ -16,7 +18,7 @@ namespace Data2Check
         static Dictionaries Dictionaries = new Dictionaries();
         static DataTables DataTables = new DataTables();
         static DataTable Atradius = new DataTable();
-
+        public string ConnString { get; set; }
         public SQLMethods()
         {
             Operations operations = new Operations();
@@ -33,7 +35,6 @@ namespace Data2Check
             }
             return resultTable;
         }
-
 
         // DataTable der Kunden seit 'datum'
         public DataTable GetKunden(string datum, OdbcConnection connection, string standort)
@@ -340,7 +341,6 @@ namespace Data2Check
             }
 
             dataTable.TableName = "Lieferanten_ASCII";
-            
             return dataTable;
         }
 
@@ -357,7 +357,7 @@ namespace Data2Check
             dataTable.TableName = "Belege_ASCII";
             return dataTable;
         }
-       
+
         //Methode zur Ausgabe einer .csv Datei, erstellt aus einer DataTable
         public void Table2CSV(DataTable table, string path, string preString)
         {
@@ -403,23 +403,22 @@ namespace Data2Check
         // Methode zum Schreiben der Tabelle
         public DataTable WriteTable(OdbcCommand command, DataTable table, DataTable columnTable,OdbcConnection connection)
         {
-            if(connection.State == ConnectionState.Closed)
-            {
-                connection.Open();
-            }
             string cmd = command.CommandText;
             DataSet dataSet = new DataSet();
             Type type = typeof(string);
             DataTable cachetable = new DataTable();
             command.CommandTimeout = 30;
+
+            Task<DbDataReader> dataReader = command.ExecuteReaderAsync();
             
-            using (OdbcDataReader dataReader = command.ExecuteReader())
+            if(dataReader.Status == TaskStatus.RanToCompletion)
             {
+                DbDataReader reader = dataReader.Result;
                 try
                 {
                     Stopwatch stopwatch = new Stopwatch();
                     stopwatch.Start();
-                    table.Load(dataReader);
+                    table.Load(reader);
                     stopwatch.Stop();
                 }
                 catch (OdbcException oex)
@@ -609,13 +608,12 @@ namespace Data2Check
 
             return query;
         }
-        
+
         //SQL-Abfrage Kunden transASCIIact
         public string GetDataKunden(string standort)
         {
             string query = string.Empty;
 
-            
             if (standort == "1")
             {
                 query = "select " +
@@ -631,6 +629,7 @@ namespace Data2Check
                     "and kdn_typ = 'D' " +
                     "group by kdn_kontonr ";
             }
+
             if (standort == "2")
             {
                 query = "select " +
@@ -651,7 +650,6 @@ namespace Data2Check
         // SQL-Abfrage Lieferanten für transASCIIact
         public string GetDataLieferanten(string standort)
         {
-            
             string query = string.Empty;
 
             if (standort == "1")
@@ -911,12 +909,13 @@ namespace Data2Check
         protected string BelegeString()
         {
             string query = "select " +
-                "his_renr," +
-                "bel_zbnr " +
-                "from beleg,historie " +
+                "bel_nr," +
+                "bel_zbnr," +
+                "kdn_kontonr " +
+                "from beleg,kunden " +
                 "where bel_datum > 20230801 " +
-                "and bel_typ = 1 " +
-                "and his_belnr = bel_nr " +
+                "and kdn_lfdnr = bel_kdnlfdnr " +
+                "and bel_typ = 4 " +
                 "group by bel_nr";
 
             return query;
