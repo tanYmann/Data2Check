@@ -1,0 +1,22 @@
+﻿<Window x:Class="Data2Check.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Data2Check"
+        mc:Ignorable="d"
+        Title="Einstellungen" Height="450" Width="800">
+    <Grid>
+        <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Height="385" Margin="10,10,0,0" VerticalAlignment="Top" Width="772">
+            <StackPanel Orientation="Vertical">
+                <Button x:Name="BtnOptions" Content="Einstellungen"/>
+                <Button x:Name="BtnConnection" Content="Verbindung"/>
+                <Button x:Name="BtnSqlQueries" Content="SQL Abfragen"/>
+                <Button x:Name="BtnOutput" Content="Ausgabeverzeichnis"/>
+                <Canvas Height="50"></Canvas>
+            </StackPanel>
+            <StackPanel Orientation="Vertical"></StackPanel>
+        </StackPanel>
+
+    </Grid>
+</Window>

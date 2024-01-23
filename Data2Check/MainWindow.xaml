@@ -22,12 +22,18 @@
                                 <GradientStop Color="#FF006CC7" Offset="0.801"/>
                             </LinearGradientBrush>
                         </TextBlock.Background><Run Text="  A  U  T  O  E  X  P  O  R  T  "/></TextBlock>
-                    <TextBlock x:Name="txtStatus" Text="" Height="160" Width="159" HorizontalAlignment="Left"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Canvas Width="15"></Canvas>
+                    <TextBlock x:Name="txtStatus" Text="" Height="300" Width="293" HorizontalAlignment="Left"/>
+                        <TextBlock x:Name="txtRemainingTime" Height="300" Width="463" HorizontalAlignment="Center"/>
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Height="35">
                 <Button x:Name="ButtonStart" Content=" S T A R T " HorizontalAlignment="Left"  Click="BtnStartClick"/>
                 <Button x:Name="ButtonOptions" Content=" OPTIONEN " HorizontalAlignment="Left" Click="ButtonOptions_Click"/>
+                <Canvas Width="50"></Canvas>
+                <TextBlock x:Name="ElapsedTimeText" HorizontalAlignment="Right" FontSize="24" Width="290"/>
             </StackPanel>
         </StackPanel>
         <ProgressBar x:Name="progressbar" IsManipulationEnabled="True" Margin="2,441,2,-19.4">

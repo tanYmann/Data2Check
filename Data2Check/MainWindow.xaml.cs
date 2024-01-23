@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Data.Odbc;
 using System.Drawing;
 using System.IO;
@@ -18,14 +20,15 @@ namespace Data2Check
 {
     public partial class MainWindow : Window
     {
+        private System.Timers.Timer timer;
         static DataTable Atradius = new DataTable();
         static string Path = @"c:\tmp\DataCheck\";
         static OdbcConnection OdbcSDL = new OdbcConnection("DSN=Parity_SDL;Pooling=true;");
         static OdbcConnection OdbcHBS = new OdbcConnection("DSN=Parity_HBS;Pooling=true;");
         static string preString { get; set; }
         static int Standort = 1;
-        static OdbcConnection[] Connections = new OdbcConnection[] { OdbcSDL, OdbcHBS };
-        static string ASCIIPath = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\transASCIIact\";
+        public OdbcConnection[] Connections = new OdbcConnection[] { OdbcSDL, OdbcHBS };
+        static string ASCIIPath = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\transASCIIact\test\";
         static FileInfo DateFile = new FileInfo(Directory.GetCurrentDirectory() + "\\LastDate.txt");
         static CancellationTokenSource cancellation = new CancellationTokenSource();
         const string RegistryKeyString = "Data2Check";
@@ -33,52 +36,104 @@ namespace Data2Check
         static int testCounter = 0;
         TimeSpan target = new TimeSpan(2, 30, 0);
         static int TestCounter { get => testCounter; }
-        
-        async Task Main()
+        Operations operations = new Operations();
+        SQLMethods queriesMethods = new SQLMethods();
+        bool WaitTxt = false;
+        DateTime Endtime = new DateTime();
+
+
+        // MainWindoiw
+        public MainWindow()
         {
+            this.Endtime = SetEndTime(new TimeSpan(0, 2, 0));
+            InitializeComponent();
+            InitializeNotifyIcon();
             SetRegistryKey();
-            if (!await CheckNetwork())
+
+            do
             {
-                await CheckNetwork();
+                CheckNetwork();
+                SetText("Keine Verbindung!");
+            }while(!CheckNetwork());
+
+            Task.Run(async () => await ExportData());
+           
+        }
+
+        //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
+        private void InitializeTimer()
+        {
+            timer = new System.Timers.Timer
+            {
+                Interval = 1000, // Timer-Intervall in Millisekunden (hier 1 Sekunde)
+                AutoReset = true
+            };
+
+            timer.Elapsed += TimerElapsed;
+            timer.Start();
+
+        }
+
+        // Connectionary - Das Dictionary der OdbcConnections
+        public Dictionary<int, OdbcConnection> connectionary = new Dictionary<int, OdbcConnection>()
+        {
+            {1,OdbcSDL },
+            {2,OdbcHBS }
+        };
+
+        // Endzeit des Timers
+        public DateTime SetEndTime(TimeSpan span)
+        {
+            DateTime now = DateTime.Now;
+            now = now.AddHours(1);
+            return now;
+        }
+
+        // Vergangene Zeit
+        private void TimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            var remainingTime = NextExecution(Endtime);
+            App.Current.Dispatcher.Invoke(() => SetRemainingTime(remainingTime));
+
+            if (remainingTime <= TimeSpan.Zero)
+            {
+                timer.Stop();
+                Task.Run(async () => await ExportData());
+                Endtime = SetEndTime(target);
             }
         }
 
-
-        public MainWindow()
+        // Anzeige der verbleibenden Zeit bis zur nächsten Ausführung
+        private void SetRemainingTime(TimeSpan remainingTime)
         {
-            InitializeComponent();
-            InitializeNotifyIcon();
-            Task.Run(() => ExportData());
+            txtRemainingTime.Text = $"Zeit bis zum nächsten Export: {remainingTime.Hours}h {remainingTime.Minutes}m {remainingTime.Seconds}s";
         }
-            
-        
 
-        private void TimerElapsed(object sender, ElapsedEventArgs e)
-        {
-             
-        }
-        //        
-        //        while (true)
-        //        {
-        //  
-        //  
-        //            Task.Run(() => ExportData());
-        //            target = target.Add(new TimeSpan(24, 0, 0));
-        //        }
-
-        TimeSpan NextExecution(TimeSpan targetTime)
+        // Zeitspanne bis zur nächsten Ausführung
+        TimeSpan NextExecution(DateTime targetTime)
         {
             DateTime now = DateTime.Now;
-            DateTime targetDateTime = new DateTime(now.Year, now.Month, now.Day, targetTime.Hours, targetTime.Minutes, targetTime.Seconds);
-         
-            if (now > targetDateTime)
+            DateTime targetDateTime = new DateTime(now.Year, now.Month, now.Day, targetTime.Hour, targetTime.Minute, targetTime.Second);
+
+            if (WaitTxt == false)
             {
-                targetDateTime = targetDateTime.AddDays(1);
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    SetText("Warten auf nächste Ausführung \n");
+                    WaitTxt = true;
+                });
+            }
+            else
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    SetText(".");
+                });
             }
 
             return targetDateTime - now;
         }
-        
+
         // Setzen  des Statustext
         public string SetStatusTxt(string text)
         {
@@ -95,8 +150,10 @@ namespace Data2Check
             {
                 key.SetValue(key.Name, System.Reflection.Assembly.GetExecutingAssembly().Location);
             }
+
+            SetText("Key in Registrierung geprüft.\n");
         }
-        
+
         // Letztes Datum Programmausführung  
         string GetLastDate()
         {
@@ -113,30 +170,25 @@ namespace Data2Check
 
             return dateString;
         }
-        
-        static void QueryTimeoutCallback(object state)
-        {
-            if (state is CancellationTokenSource cancellationTokenSource)
-            {
-                cancellationTokenSource.Cancel();
-            }
-        }
 
-        static async Task<bool> CheckNetwork()
+        // Prüfen der Netzwerkverbindung
+        static bool CheckNetwork()
         {
             bool status;
             Ping ping = new Ping();
-            
+
             try
             {
-                PingReply reply = await ping.SendPingAsync("www.google.com", 8000);
+                PingReply reply = ping.Send("www.google.de");
                 return reply.Status == IPStatus.Success;
             }
-            catch(Exception x)
+            catch (Exception x)
             {
                 return false;
             }
         }
+
+        // Prüfen der VPN-Verbindung
         void IsJuniperAndConnected()
         {
             bool isConnected = false;
@@ -161,11 +213,12 @@ namespace Data2Check
             }
         }
 
+        // ODBC-Treiber prüfen
         bool checkOdbc(OdbcConnection connection)
         {
             if (connection.Driver == null)
             {
-                Thread.Sleep(30000);
+                Task.Delay(3000);
                 checkOdbc(connection);
                 return false;
             }
@@ -175,14 +228,15 @@ namespace Data2Check
             }
         }
 
+        // Prüfen ob OdbcConnection offen
         bool CheckUp(OdbcConnection connection)
         {
             bool check = false;
-            if(connection != null)
+            if (connection != null)
             {
                 try
                 {
-                    if(connection.State == ConnectionState.Open)
+                    if (connection.State == ConnectionState.Open)
                     {
                         connection.Close();
                     }
@@ -191,9 +245,9 @@ namespace Data2Check
                     check = true;
                     return check;
                 }
-                catch(Exception x)
+                catch (Exception x)
                 {
-                    
+
                 }
             }
             else
@@ -206,58 +260,69 @@ namespace Data2Check
             return check;
         }
 
-        // Exportmethode
-        [STAThread]
-        async private void ExportData()
+
+        // Der Datenexport
+        public async Task ExportData()
         {
+            Standort = 1;
             CancellationToken token = cancellation.Token;
-            Operations operations = new Operations();
-            SQLMethods queriesMethods = new SQLMethods();
+            DataTable dataTable = new DataTable();
             operations.FillAtradius(Atradius);
-            System.Threading.Timer queryTimeoutTimer = new System.Threading.Timer(QueryTimeoutCallback, cancellation, 600000, Timeout.Infinite);
 
             foreach (OdbcConnection conn in Connections)
             {
-                using (conn)
+                SetPreString(conn.ConnectionString);
+                UpdateProgressBar(10);
+                SetText("Vorbereitung abgeschlossen. \n");
+                Dictionary<string, string> dict = new Dictionary<string, string>();
+                try
                 {
-                    try
+                    if (conn.State != ConnectionState.Open)
+                    {
+                        conn.Open();
+                    }
+
+                    if (conn.ConnectionString.Contains("SDL"))
+                    {
+                        dict = queriesMethods.QueriesSDL;
+                    }
+                    else if (conn.ConnectionString.Contains("HBS"))
+                    {
+                        dict = queriesMethods.QueriesHBS;
+                    }
+                    foreach (var key in dict)
+                    {
+                        dataTable = new DataTable(key.Key.ToString());
+
+                        using (OdbcCommand command = new OdbcCommand(key.Value, conn))
+                        {
+                            dataTable.Load(command.ExecuteReader());
+                            queriesMethods.Table2CSV(dataTable, ASCIIPath, preString);
+                            SetText(preString + dataTable.TableName + " wurde exportiert. \n");
+                            UpdateProgressBar(10);
+
+                            await Task.Delay(300);
+                        }
+                    }
+                }
+
+                catch (Exception ex)
+                {
+                    SetText($"Error: {ex.Message}");
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
                     {
                         conn.Close();
                     }
-                    catch (Exception x)
-                    {
-
-                    }
-
-                    conn.Open();
-
-                    SetPreString(conn.ConnectionString);
-                    UpdateProgressBar(10);
-                    //DataTable kunden = queriesMethods.GetKunden(operations.GetLastDate(), conn, Standort.ToString());
-                    //queriesMethods.Table2CSV(kunden, Path, preString);
-                    //SetText("DU_Kunden_neu exportiert \n"); 
-                    UpdateProgressBar(10);
-                    //DataTable lieferanten = queriesMethods.GetLieferanten(operations.GetLastDate(), conn, Standort.ToString());
-                    //queriesMethods.Table2CSV(lieferanten, Path, preString);
-                    //SetText("DU_Lieferanten_neu exportiert \n");
-                    UpdateProgressBar(10);
-                    DataTable kundenASCII = queriesMethods.GetKundenASCII(queriesMethods.GetDataKunden(Standort.ToString()), conn);
-                    queriesMethods.Table2CSV(kundenASCII, ASCIIPath, preString);
-                    UpdateProgressBar(10);
-                    DataTable lieferantenASCII = queriesMethods.GetLieferantenASCII(queriesMethods.GetDataLieferanten(Standort.ToString()), conn);
-                    queriesMethods.Table2CSV(lieferantenASCII, ASCIIPath, preString);
-                    UpdateProgressBar(10);
-                    await Task.Delay(5000);
-                    DataTable belegeASCII = queriesMethods.GetBelegeASCII(conn);
-                    queriesMethods.Table2CSV(belegeASCII, ASCIIPath, preString);
                 }
 
+                int i = 0;
                 UpdateProgressBar(10);
                 UpdateProgressBar(10);
-                
                 Standort++;
 
-                //operations.SetLastDate(DateFile);
                 testCounter++;
 
                 using (FileStream stream = new FileStream(@"C:\tmp\Testlaeufe.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite))
@@ -273,22 +338,37 @@ namespace Data2Check
                     progressbar.BringIntoView();
                 });
             }
-        }
 
-        static DateTime GetDateTime2Repeat()
+            InitializeTimer();
+        }
+        
+        
+
+        // SQL-Selections
+        public void SqlQueries(DataTable kunden, DataTable lieferanten,DataTable belege)
         {
-            // Testen
-            DateTime dateTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, 0);
-            TimeSpan timeSpan = new TimeSpan(0, 2, 0);
-            // Realbetrieb
-            //DateTime dateTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 2, 30, 0);
-            //TimeSpan timeSpan = new TimeSpan(24,0,0);
-            
-            _ = dateTime.Add(timeSpan);
-
-            return dateTime;
+            queriesMethods.Table2CSV(kunden, ASCIIPath, preString);
+            queriesMethods.Table2CSV(lieferanten, ASCIIPath, preString);
+            queriesMethods.Table2CSV(belege, ASCIIPath, preString);
         }
 
+        //Connection wähklen anHand des Standortes
+        public OdbcConnection GetConnection(int standort)
+        {
+            OdbcConnection conn = new OdbcConnection();
+
+            if(standort == 1)
+            {
+               return OdbcSDL;
+            }
+            else if(standort == 2)
+            {
+                conn = OdbcHBS;
+            }
+
+            return conn;
+        }
+              
         // Notify-Icon beim Minimieren
         private void InitializeNotifyIcon()
         {
@@ -329,10 +409,13 @@ namespace Data2Check
         }
 
         // Methode zum Anzeigen des Status Text
-        private void SetText(string text)
+        public void SetText(string text)
         {
-            txtStatus.Text += text;
-            txtStatus.BringIntoView();
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                txtStatus.Text += text;
+                txtStatus.BringIntoView();
+            });           
         }
 
         // Standortkürzel für Dateinamen
@@ -349,7 +432,7 @@ namespace Data2Check
                 preString = "HBS_";
             }
         }
-        
+
         // Bewegen der ProgressBar
         private void UpdateProgressBar(int value)
         {
@@ -367,13 +450,13 @@ namespace Data2Check
             {
                 string startupFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
                 FileInfo appFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                FileInfo shortcutFileInfo = new FileInfo(startupFolderPath+"\\Data2Check.lnk");
-                
+                FileInfo shortcutFileInfo = new FileInfo(startupFolderPath + "\\Data2Check.lnk");
+
                 if (shortcutFileInfo.Exists)
                 {
                     shortcutFileInfo.Delete();
                 }
-                
+
                 using (StreamWriter writer = new StreamWriter(shortcutFileInfo.FullName))
                 {
                     writer.WriteLine("[Data2Check]");
@@ -388,22 +471,32 @@ namespace Data2Check
             }
         }
 
+        //Button zum Anlegen des Shortcuts in Autostart
         private void ButtonCreateShortcut_Click(object sender, RoutedEventArgs e)
         {
             CreateShortcutInAutostart();
         }
 
+        // Button zum manuellen Starten des Datenexports
         private void BtnStartClick(object sender, RoutedEventArgs e)
         {
-            Task.Run(() => ExportData());
+            Task.Run(async() => await ExportData());
         }
-
+        
+        // Button zum Öffnen der Optionen
         private void ButtonOptions_Click(object sender, RoutedEventArgs e)
         {
-    
+            Window1 window1 = new Window1();
+
+            if (window1.IsVisible)
+            {
+                window1.BringIntoView();
+            }
+            else
+            {
+                window1.Show();
+            }
         }
-    
-        
     }
 }
 

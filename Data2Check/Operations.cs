@@ -34,7 +34,8 @@ namespace Data2Check
         {
 
         }
-
+        
+        // Datumsstring
         public string GetLastDate()
         {
             using (FileStream fstream = new FileStream(Directory.GetCurrentDirectory().ToString()+"\\LastDate.txt", FileMode.Open, FileAccess.Read))
@@ -46,6 +47,7 @@ namespace Data2Check
             return Date;
         }
 
+        // Führende Nullen hinzufügen
         string AddZero(string datepart)
         {
             if (int.Parse(datepart) < 10)
@@ -56,6 +58,7 @@ namespace Data2Check
             return datepart;
         }
 
+        // Setzen des Datumsstrings
         public void SetLastDate(FileInfo info)
         {
             using (FileStream fstream = info.OpenWrite())
@@ -63,7 +66,6 @@ namespace Data2Check
             {
                 writer.BaseStream.Position = 0;
                 writer.WriteLine(DateTime.Now.Year.ToString() + AddZero(DateTime.Now.Month.ToString()) + AddZero(DateTime.Now.Day.ToString()));
-                    
             }
         }
         
@@ -520,7 +522,7 @@ namespace Data2Check
             return rabattgruppe;
         }
 
-
+        // Füllen der Atradiustabelle
         public void FillAtradius(DataTable Atradius)
         {
             int count = 0;
