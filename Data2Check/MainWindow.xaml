@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Data2Check"
         mc:Ignorable="d"
-        Title="MainWindow" Height="479" Width="830">
+        Title="MainWindow" Height="495" Width="1418">
     <Grid>
         <StackPanel Orientation="Vertical">
             <StackPanel Orientation="Horizontal" Height="368">
@@ -22,21 +22,24 @@
                                 <GradientStop Color="#FF006CC7" Offset="0.801"/>
                             </LinearGradientBrush>
                         </TextBlock.Background><Run Text="  A  U  T  O  E  X  P  O  R  T  "/></TextBlock>
-                    <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical">
                         <Canvas Width="15"></Canvas>
-                    <TextBlock x:Name="txtStatus" Text="" Height="300" Width="293" HorizontalAlignment="Left"/>
-                        <TextBlock x:Name="txtRemainingTime" Height="300" Width="463" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="txtStatus" Text="" Height="264" Width="1407" HorizontalAlignment="Left"/>
+                        <TextBlock x:Name="txtRemainingTime" Height="53" Width="1399" Background="Black" HorizontalAlignment="Left" FontSize="24" TextAlignment="Center" Foreground="#FFFF0A0A">
+                        </TextBlock>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Height="35">
-                <Button x:Name="ButtonStart" Content=" S T A R T " HorizontalAlignment="Left"  Click="BtnStartClick"/>
-                <Button x:Name="ButtonOptions" Content=" OPTIONEN " HorizontalAlignment="Left" Click="ButtonOptions_Click"/>
+            <StackPanel Orientation="Horizontal" Height="55" VerticalAlignment="Center">
+                <Canvas Width="55"/>
+                <Button x:Name="ButtonStart" Content=" S T A R T " HorizontalAlignment="Center" Width="85"/>
+                <Canvas Width="8"/>
+                <Button x:Name="ButtonOptions" Content=" OPTIONEN " HorizontalAlignment="Center" Width="85"/>
                 <Canvas Width="50"></Canvas>
                 <TextBlock x:Name="ElapsedTimeText" HorizontalAlignment="Right" FontSize="24" Width="290"/>
             </StackPanel>
         </StackPanel>
-        <ProgressBar x:Name="progressbar" IsManipulationEnabled="True" Margin="2,441,2,-19.4">
+        <ProgressBar x:Name="progressbar" IsManipulationEnabled="True" Margin="2,463,2,-33" Height="34" VerticalAlignment="Top">
             <ProgressBar.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform ScaleY="-1"/>

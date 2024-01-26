@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Odbc;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,143 @@ namespace Data2Check
 {
     public class Operations
     {
+        public DataTable WriteTable(OdbcCommand command, DataTable table)
+        {
+         
+            string cmd = command.CommandText;
+            DataSet dataSet = new DataSet();
+            Type type = typeof(string);
+            DataTable cachetable = new DataTable();
+            DataTable columntable = Tables.s_Kunde.Clone();
+            command.CommandText = cmd;
+            command.CommandTimeout = 30;
+
+            if (command.Connection.State != ConnectionState.Open)
+            {
+                command.Connection.Open();
+            }
+
+            try
+            {
+                table.Load(command.ExecuteReader());
+            }
+
+            catch (Exception oex)
+            {
+         
+            }
+
+            command.Connection.Close();
+            DataTable clone = table.Clone();
+            int i = 0;
+
+            foreach (DataColumn col in clone.Columns)
+            {
+                col.ReadOnly = false;
+                col.DataType = typeof(string);
+            }
+            foreach (DataRow row in table.Rows)
+            {
+                try
+                {
+                    clone.ImportRow(row);
+                }
+                catch (Exception ex)
+                {
+         
+                }
+            }
+            if (columntable != null)
+            {
+                foreach (DataColumn col in clone.Columns)
+                {
+
+                    try
+                    {
+                        col.ColumnName = columntable.Columns[i].ColumnName.ToString();
+                    }
+                    catch (Exception e)
+                    {
+         
+                    }
+
+                    i++;
+                }
+            }
+
+            return clone;
+        }
+        public void FillUstidKobensen(DataTable kobensen)
+        {
+            int count = 0;
+
+            string KobensenFile = @"C:\Users\TanPat\source\repos\tanYmann\ODBCconnect\Kobensen_Anhang_B_I.csv";
+
+            FileStream streamIn = new FileStream(KobensenFile, FileMode.Open, FileAccess.Read);
+
+            StreamReader sr = new StreamReader(streamIn);
+
+            string[] field = new string[9];
+
+            while (!sr.EndOfStream)
+            {
+                string line = sr.ReadLine();
+
+                try
+                {
+                    field[0] = line.Split(';')[0];
+                    field[1] = line.Split(';')[1];
+                    field[2] = line.Split(';')[2];
+                    field[3] = line.Split(';')[3];
+                    field[4] = line.Split(';')[4];
+                    field[5] = line.Split(';')[5];
+                    field[6] = line.Split(';')[6];
+                    field[7] = line.Split(';')[7];
+                    field[8] = line.Split(';')[8];
+                }
+                catch (Exception e)
+                {
+                   
+                }
+
+                if (count == 0)
+                {
+                    foreach (string entry in field)
+                    {
+                        kobensen.Columns.Add(entry, typeof(string));
+                    }
+
+                    kobensen.PrimaryKey = new DataColumn[] { kobensen.Columns[field[0]] };
+
+                    count++;
+
+                }
+                else
+                {
+                    DataRow row = kobensen.NewRow();
+
+                    try
+                    {
+                        int countF = 0;
+
+                        foreach (string entry in field)
+                        {
+                            row.SetField(countF, entry);
+
+                            countF++;
+                        }
+
+                        kobensen.Rows.Add(row);
+                    }
+                    catch (Exception ex)
+                    {
+         
+
+                    }
+                }
+
+            }
+        }
         public FileInfo FileInfoDate = new FileInfo(Directory.GetCurrentDirectory().ToString() + "\\LastDate.txt");
         public string Street { get; set; }
         public string HNr { get; set; }
@@ -160,53 +298,27 @@ namespace Data2Check
         }
 
         // Trennung von Straße und Hausnummer
-        public void GetHnr(string strasse)
+        public static (string street, string houseNumber) GetHnr(string address)
         {
-            bool nrVorhanden = false;
-            strasse = strasse.Replace(" - ", "-");
+            address = Regex.Replace(address, @"\b([0-9]+)\s*([A-Za-z])\b", "$1");
+            var regex = new Regex(@"(?<strasse>.*[^\d\s])\s*(?<hausnummer>\d+(?:[-\s]\d+)?[A-Za-z]?)$");
+            var match = regex.Match(address);
 
-            if (strasse != null)
+            if (match.Success)
             {
-                foreach (string nummer in ListZahlen)
-                {
-                    if (strasse.Contains(nummer.ToString()))
-                    {
-                        nrVorhanden = true;
-                    }
-                }
-
-                if (nrVorhanden == true)
-                {
-                    HNr = "";
-                    Street = "";
-                    string pattern = @"^(.+)\s(\S+)$";
-                    Regex regex = new Regex(pattern);
-
-                    try
-                    {
-                        Street = regex.Match(strasse.ToString()).Groups[1].Captures[0].Value.ToString();
-                        HNr = regex.Match(strasse.ToString()).Groups[2].Captures[0].Value.ToString();
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                }
-                else
-                {
-                    Street = strasse;
-                    HNr = "@";
-                }
+                var street = match.Groups["strasse"].Value.Trim();
+                var houseNumber = match.Groups["hausnummer"].Value.Trim();
+                return (street, houseNumber);
             }
             else
             {
-                Street = "@";
-                HNr = "@";
+                return (null, null);
             }
-        }
+        } 
+        
 
         // -----------------------------------------------Setzen der Branchennummer mit drei Ziffern (führende 0)
-        public string SetBrancheNr(string branchennr)
+        public static string SetBrancheNr(string branchennr)
         {
             int nummer = 0;
 
@@ -216,7 +328,7 @@ namespace Data2Check
             }
             catch (Exception e)
             {
-
+                
             }
 
             string zweifach = "00";
@@ -548,10 +660,10 @@ namespace Data2Check
                     {
                         Atradius.Columns.Add(entry, typeof(string));
                     }
-
-                    Atradius.PrimaryKey = new DataColumn[] { Atradius.Columns[field[0]] };
                     count++;
+
                 }
+                
                 else
                 {
                     DataRow row = Atradius.NewRow();
@@ -573,7 +685,7 @@ namespace Data2Check
                         MessageBox.Show(ex.Message);
                     }
                 }
-
+                Atradius.PrimaryKey = new DataColumn[] { Atradius.Columns[field[0]] };
             }
         }
     }

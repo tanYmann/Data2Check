@@ -8,23 +8,34 @@ namespace Data2Check
 {
     public class Dictionaries
     {
-        public static Dictionary<string, string> regioAT = new Dictionary<string, string>();
-        public static Dictionary<string, string> regioBE = new Dictionary<string, string>();
-        public static Dictionary<string, string> regioNL = new Dictionary<string, string>();
-        public static Dictionary<string, string> regioDE = new Dictionary<string, string>();
-        public static Dictionary<string, string> regioCH = new Dictionary<string, string>();
-
         public Dictionaries()
         {
-            FillregioAT(regioAT);
-            FillregioBE(regioBE);
-            FillregioNL(regioNL);
-            FillregioDE(regioDE);
-            FillRegioCH(regioCH);
+
         }
 
+        // Betriebskalnder Dictionary
+        public static Dictionary<string, string> Betriebskalender = new Dictionary<string, string>()
+        {
+                {"SAH", "2"},
+                {"BAY", "3"},
+                {"RLP", "4"},
+                {"MVP", "5"},
+                {"NRW", "1"},
+                {"NIE", "6"},
+                {"BWÜ", "7"},
+                {"HH", "8" },
+                {"HB", "9" },
+                {"BER", "10"},
+                {"THÜ", "11"},
+                {"SAC", "12"},
+                {"BDB", "13"},
+                {"HES", "14"},
+                {"SAA", "15"},
+                {"SWH", "16"}
+        };
+
         // Liste WA-Zubehör
-        public List<string> WuAZubehoerList = new List<string>()
+        public static List<string> WuAZubehoerList = new List<string>()
         {
             {"85860-0100"},
             {"82475-0500"},
@@ -185,7 +196,7 @@ namespace Data2Check
         };
 
         //Liste Rechnungszahler
-        public List<string> RgZahlerList = new List<string>()
+        public static List<string> RgZahlerList = new List<string>()
         {
             {"10026"},
         {"10031"},
@@ -1430,171 +1441,242 @@ namespace Data2Check
             };
 
         //Regionen - Österreich
-        public void FillregioAT(Dictionary<string, string> regioAT)
+        public static Dictionary<string, string> regioAT = new Dictionary<string, string>()
         {
-            regioAT.Add("1", "EATBA");
-            regioAT.Add("2", "EATCA");
-            regioAT.Add("3", "EATDA");
-            regioAT.Add("4", "EATEA");
-            regioAT.Add("5", "EATFA");
-            regioAT.Add("6", "EATGA");
-            regioAT.Add("7", "EATHA");
-            regioAT.Add("8", "EATIA");
-            regioAT.Add("9", "EATJA");
+            {"1", "EATBA" } ,
+            {"2", "EATCA"},
+            {"3", "EATDA"},
+            {"4", "EATEA"},
+            {"5", "EATFA"},
+            {"6", "EATGA"},
+            {"7", "EATHA"},
+            {"8", "EATIA"},
+            {"9", "EATJA"}
 
-        }
+        };
 
         //Regionen - Belgien
-        public void FillregioBE(Dictionary<string, string> regioBE)
+        public static Dictionary<string, string> regioBE = new Dictionary<string, string>()
         {
-            regioBE.Add("1", "EBEBA");
-            regioBE.Add("2", "EBECA");
-            regioBE.Add("3", "EBEDA");
-            regioBE.Add("4", "EBEEA");
-            regioBE.Add("5", "EBEFA");
-            regioBE.Add("6", "EBEGA");
-            regioBE.Add("7", "EBEHA");
-            regioBE.Add("8", "EBEIA");
-            regioBE.Add("9", "EBEJA");
+            { "1", "EBEBA"},
+            {"2", "EBECA"},
+            {"3", "EBEDA"},
+            {"4", "EBEEA"},
+            {"5", "EBEFA"},
+            {"6", "EBEGA"},
+            {"7", "EBEHA"},
+            {"8", "EBEIA"},
+            {"9", "EBEJA"}
 
-        }
+        };
 
         //Regionen - Niederlande
-        public void FillregioNL(Dictionary<string, string> regioNL)
+        public static Dictionary<string, string> regioNL = new Dictionary<string, string>()
         {
-            regioNL.Add("1", "ENLBA");
-            regioNL.Add("2", "ENLCA");
-            regioNL.Add("3", "ENLDA");
-            regioNL.Add("4", "ENLEA");
-            regioNL.Add("5", "ENLFA");
-            regioNL.Add("6", "ENLGA");
-            regioNL.Add("7", "ENLHA");
-            regioNL.Add("8", "ENLIA");
-            regioNL.Add("9", "ENLJA");
-        }
+            {"1", "ENLBA" } ,
+            {"2", "ENLCA"},
+            {"3", "ENLDA"},
+            {"4", "ENLEA"},
+            {"5", "ENLFA"},
+            {"6", "ENLGA"},
+            {"7", "ENLHA"},
+            {"8", "ENLIA"},
+            {"9", "ENLJA"}
+        };
 
         //Regionen - Deutschland
-        public void FillregioDE(Dictionary<string, string> regioDE)
+        public static Dictionary<string, string> regioDE = new Dictionary<string, string>()
         {
-            regioDE.Add("01", "EDEAB");
-            regioDE.Add("02", "EDEAC");
-            regioDE.Add("03", "EDEAD");
-            regioDE.Add("04", "EDEAE");
-            regioDE.Add("05", "EDEAF");
-            regioDE.Add("06", "EDEAG");
-            regioDE.Add("07", "EDEAH");
-            regioDE.Add("08", "EDEAI");
-            regioDE.Add("09", "EDEAJ");
-            regioDE.Add("10", "EDEBA");
-            regioDE.Add("11", "EDEBB");
-            regioDE.Add("12", "EDEBC");
-            regioDE.Add("13", "EDEBD");
-            regioDE.Add("14", "EDEBE");
-            regioDE.Add("15", "EDEBF");
-            regioDE.Add("16", "EDEBG");
-            regioDE.Add("17", "EDEBH");
-            regioDE.Add("18", "EDEBI");
-            regioDE.Add("19", "EDEBJ");
-            regioDE.Add("20", "EDECA");
-            regioDE.Add("21", "EDECB");
-            regioDE.Add("22", "EDECC");
-            regioDE.Add("23", "EDECD");
-            regioDE.Add("24", "EDECE");
-            regioDE.Add("25", "EDECF");
-            regioDE.Add("26", "EDECG");
-            regioDE.Add("27", "EDECH");
-            regioDE.Add("28", "EDECI");
-            regioDE.Add("29", "EDECJ");
-            regioDE.Add("30", "EDEDA");
-            regioDE.Add("31", "EDEDB");
-            regioDE.Add("32", "EDEDC");
-            regioDE.Add("33", "EDEDD");
-            regioDE.Add("34", "EDEDE");
-            regioDE.Add("35", "EDEDF");
-            regioDE.Add("36", "EDEDG");
-            regioDE.Add("37", "EDEDH");
-            regioDE.Add("38", "EDEDI");
-            regioDE.Add("39", "EDEDJ");
-            regioDE.Add("40", "EDEEA");
-            regioDE.Add("41", "EDEEB");
-            regioDE.Add("42", "EDEEC");
-            regioDE.Add("43", "EDEED");
-            regioDE.Add("44", "EDEEE");
-            regioDE.Add("45", "EDEEF");
-            regioDE.Add("46", "EDEEG");
-            regioDE.Add("47", "EDEEH");
-            regioDE.Add("48", "EDEEI");
-            regioDE.Add("49", "EDEEJ");
-            regioDE.Add("50", "EDEFA");
-            regioDE.Add("51", "EDEFB");
-            regioDE.Add("52", "EDEFC");
-            regioDE.Add("53", "EDEFD");
-            regioDE.Add("54", "EDEFE");
-            regioDE.Add("55", "EDEFF");
-            regioDE.Add("56", "EDEFG");
-            regioDE.Add("57", "EDEFH");
-            regioDE.Add("58", "EDEFI");
-            regioDE.Add("59", "EDEFJ");
-            regioDE.Add("60", "EDEGA");
-            regioDE.Add("61", "EDEGB");
-            regioDE.Add("62", "EDEGC");
-            regioDE.Add("63", "EDEGD");
-            regioDE.Add("64", "EDEGE");
-            regioDE.Add("65", "EDEGF");
-            regioDE.Add("66", "EDEGG");
-            regioDE.Add("67", "EDEGH");
-            regioDE.Add("68", "EDEGI");
-            regioDE.Add("69", "EDEGJ");
-            regioDE.Add("70", "EDEHA");
-            regioDE.Add("71", "EDEHB");
-            regioDE.Add("72", "EDEHC");
-            regioDE.Add("73", "EDEHD");
-            regioDE.Add("74", "EDEHE");
-            regioDE.Add("75", "EDEHF");
-            regioDE.Add("76", "EDEHG");
-            regioDE.Add("77", "EDEHH");
-            regioDE.Add("78", "EDEHI");
-            regioDE.Add("79", "EDEHJ");
-            regioDE.Add("80", "EDEIA");
-            regioDE.Add("81", "EDEIB");
-            regioDE.Add("82", "EDEIC");
-            regioDE.Add("83", "EDEID");
-            regioDE.Add("84", "EDEIE");
-            regioDE.Add("85", "EDEIF");
-            regioDE.Add("86", "EDEIG");
-            regioDE.Add("87", "EDEIH");
-            regioDE.Add("88", "EDEII");
-            regioDE.Add("89", "EDEIJ");
-            regioDE.Add("90", "EDEJA");
-            regioDE.Add("91", "EDEJB");
-            regioDE.Add("92", "EDEJC");
-            regioDE.Add("93", "EDEJD");
-            regioDE.Add("94", "EDEJE");
-            regioDE.Add("95", "EDEJF");
-            regioDE.Add("96", "EDEJG");
-            regioDE.Add("97", "EDEJH");
-            regioDE.Add("98", "EDEJI");
-            regioDE.Add("99", "EDEJJ");
+            {"01", "EDEAB" },
+            {"02", "EDEAC"},
+            {"03", "EDEAD"},
+            {"04", "EDEAE"},
+            {"05", "EDEAF"},
+            {"06", "EDEAG"},
+            {"07", "EDEAH"},
+            {"08", "EDEAI"},
+            {"09", "EDEAJ"},
+            {"10", "EDEBA"},
+            {"11", "EDEBB"},
+            {"12", "EDEBC"},
+            {"13", "EDEBD"},
+            {"14", "EDEBE"},
+            {"15", "EDEBF"},
+            {"16", "EDEBG"},
+            {"17", "EDEBH"},
+            {"18", "EDEBI"},
+            {"19", "EDEBJ"},
+            {"20", "EDECA"},
+            {"21", "EDECB"},
+            {"22", "EDECC"},
+            {"23", "EDECD"},
+            {"24", "EDECE"},
+            {"25", "EDECF"},
+            {"26", "EDECG"},
+            {"27", "EDECH"},
+            {"28", "EDECI"},
+            {"29", "EDECJ"},
+            {"30", "EDEDA"},
+            {"31", "EDEDB"},
+            {"32", "EDEDC"},
+            {"33", "EDEDD"},
+            {"34", "EDEDE"},
+            {"35", "EDEDF"},
+            {"36", "EDEDG"},
+            {"37", "EDEDH"},
+            {"38", "EDEDI"},
+            {"39", "EDEDJ"},
+            {"40", "EDEEA"},
+            {"41", "EDEEB"},
+            {"42", "EDEEC"},
+            {"43", "EDEED"},
+            {"44", "EDEEE"},
+            {"45", "EDEEF"},
+            {"46", "EDEEG"},
+            {"47", "EDEEH"},
+            {"48", "EDEEI"},
+            {"49", "EDEEJ"},
+            {"50", "EDEFA"},
+            {"51", "EDEFB"},
+            {"52", "EDEFC"},
+            {"53", "EDEFD"},
+            {"54", "EDEFE"},
+            {"55", "EDEFF"},
+            {"56", "EDEFG"},
+            {"57", "EDEFH"},
+            {"58", "EDEFI"},
+            {"59", "EDEFJ"},
+            {"60", "EDEGA"},
+            {"61", "EDEGB"},
+            {"62", "EDEGC"},
+            {"63", "EDEGD"},
+            {"64", "EDEGE"},
+            {"65", "EDEGF"},
+            {"66", "EDEGG"},
+            {"67", "EDEGH"},
+            {"68", "EDEGI"},
+            {"69", "EDEGJ"},
+            {"70", "EDEHA"},
+            {"71", "EDEHB"},
+            {"72", "EDEHC"},
+            {"73", "EDEHD"},
+            {"74", "EDEHE"},
+            {"75", "EDEHF"},
+            {"76", "EDEHG"},
+            {"77", "EDEHH"},
+            {"78", "EDEHI"},
+            {"79", "EDEHJ"},
+            {"80", "EDEIA"},
+            {"81", "EDEIB"},
+            {"82", "EDEIC"},
+            {"83", "EDEID"},
+            {"84", "EDEIE"},
+            {"85", "EDEIF"},
+            {"86", "EDEIG"},
+            {"87", "EDEIH"},
+            {"88", "EDEII"},
+            {"89", "EDEIJ"},
+            {"90", "EDEJA"},
+            {"91", "EDEJB"},
+            {"92", "EDEJC"},
+            {"93", "EDEJD"},
+            {"94", "EDEJE"},
+            {"95", "EDEJF"},
+            {"96", "EDEJG"},
+            {"97", "EDEJH"},
+            {"98", "EDEJI"},
+            {"99", "EDEJJ"}
 
-        }
+        };
 
         //Regionen - Schweiz
-        public void FillRegioCH(Dictionary<string, string> regioCH)
+        public static Dictionary<string, string> regioCH = new Dictionary<string, string>()
         {
-            regioCH.Add("1", "ECHBA");
-            regioCH.Add("2", "ECHCA");
-            regioCH.Add("3", "ECHDA");
-            regioCH.Add("4", "ECHEA");
-            regioCH.Add("5", "ECHFA");
-            regioCH.Add("6", "ECHGA");
-            regioCH.Add("7", "ECHHA");
-            regioCH.Add("8", "ECHIA");
-            regioCH.Add("9", "ECHJA");
+            {"1", "ECHBA" },
+            {"2", "ECHCA"},
+            {"3", "ECHDA"},
+            {"4", "ECHEA"},
+            {"5", "ECHFA"},
+            {"6", "ECHGA"},
+            {"7", "ECHHA"},
+            {"8", "ECHIA"},
+            {"9", "ECHJA"}
 
-        }
+        };
 
         // Dictionary zbdnr zu Zahlungsziele
-        public Dictionary<string, string> zahlungszielDict = new Dictionary<string, string>()
+        public static Dictionary<string, string> ZbdNrVK = new Dictionary<string, string>
+        {
+            { "1",  "001"},
+            { "2",  "002"},
+            { "3",  "003"},
+            { "4",  "004"},
+            { "5",  "005"},
+            { "6",  "006"},
+            { "7",  "007"},
+            { "8",  "008"},
+            { "9",  "009"},
+            { "10", "010"},
+            { "11", "011"},
+            { "12", "012"},
+            { "13", "013"},
+            { "14", "014"},
+            { "15", "015"},
+            { "17", "016"},
+            { "18", "017"},
+            { "19", "018"},
+            { "20", "019"},
+            { "21", "020"},
+            { "22", "021"},
+            { "23", "022"},
+            { "24", "023"},
+            { "28", "024"},
+            { "29", "025"},
+            { "30", "026"},
+            { "31", "027"},
+            { "36", "028"},
+            { "37", "029"},
+            { "39", "030"},
+            { "40", "031"},
+            { "41", "032"},
+            { "42", "033"},
+            { "44", "034"},
+            { "45", "035"},
+            { "46", "036"},
+            { "50", "037"},
+            { "53", "038"},
+            { "60", "039"},
+            { "58", "039"},
+            { "63", "040"},
+            { "64", "041"},
+            { "65", "042"},
+            { "66", "043"},
+            { "68", "044"},
+            { "73", "045"},
+            { "74", "046"},
+            { "80", "047"},
+            { "86", "048"},
+            { "87", "049"},
+            { "88", "050"},
+            { "90", "051"},
+            { "92", "052"},
+            { "96", "053"},
+            { "97", "054"},
+            { "99", "055"},
+            { "100","056"},
+            { "101","057"},
+            { "102","058"},
+            { "103","059"},
+            { "104","060"},
+            { "52", "071"},
+            { "26", "001"},
+            { "27", "001"},
+            { "0",  "001"},
+            { "107","076" }
+        };
+
+        // Dictionary zbdnr zu Zahlungsziele
+        public static Dictionary<string, string> zahlungszielDict = new Dictionary<string, string>()
             {
                 {"1", "1"},
                 {"2", "2"},
@@ -1663,7 +1745,7 @@ namespace Data2Check
             };
 
         // Dictionary Zahlungsbedingungen HBS in SDL wandeln
-        public Dictionary<string, string> ZbdNrHBS2SDL = new Dictionary<string, string>
+        public static  Dictionary<string, string> ZbdNrHBS2SDL = new Dictionary<string, string>
                     {
                         {"1  ","1 " },
                         {"17 ","3 "},
@@ -1698,7 +1780,7 @@ namespace Data2Check
                     };
 
         // Dictionary sprnr zu Sprache pA
-        public Dictionary<string, string> sprachenDict = new Dictionary<string, string>
+        public static Dictionary<string, string> sprachenDict = new Dictionary<string, string>
         {
 
             {"1", "D"},
@@ -1713,7 +1795,7 @@ namespace Data2Check
         };
 
         //Dictionary Teilegruppen_Werteflussgruppen
-        public Dictionary<string, string> TgWfgDict = new Dictionary<string, string>
+        public static Dictionary<string, string> TgWfgDict = new Dictionary<string, string>
         {
             {"EAUA", "1000"},
             {"EBBA", "1000"},
@@ -1804,7 +1886,7 @@ namespace Data2Check
         };
 
         // Dctionary Verbände
-        public Dictionary<string, string> VerbandDict = new Dictionary<string, string>
+        public static Dictionary<string, string> VerbandDict = new Dictionary<string, string>
         {
 
             {"17", "195160"},
@@ -1818,29 +1900,6 @@ namespace Data2Check
             {"34", "195160"}
 
         };
-
-        // Dictionary Betriebskalender
-        public Dictionary<string, string> Betriebskalender = new Dictionary<string, string>()
-            {
-
-                {"NRW", "1"},
-                {"SAH", "2"},
-                {"BAY", "3"},
-                {"RLP", "4"},
-                {"MVP", "5"},
-                {"NIE", "6"},
-                {"BWÜ", "7"},
-                {"HH", "8"},
-                {"HB", "9"},
-                {"BER", "10"},
-                {"THÜ", "11"},
-                {"SAC", "12"},
-                {"BDB", "13"},
-                {"HES", "14"},
-                {"SAA", "15"},
-                {"SWH", "16"}
-
-            };
 
         // Preislisten Dictionary
         public static Dictionary<string, string> PrsListDict = new Dictionary<string, string>
@@ -1858,7 +1917,7 @@ namespace Data2Check
         };
 
         // Versandarten Dictionary
-        public Dictionary<string, string> VADict = new Dictionary<string, string> {
+        public static Dictionary<string, string> VADict = new Dictionary<string, string> {
             {"0", "001"},
             {"1", "001"},
             {"2", "002"},
@@ -1943,7 +2002,7 @@ namespace Data2Check
         };
 
         //Versandarten NUR EINKAUF 
-        public Dictionary<string, string> VADictEinkauf = new Dictionary<string, string>
+        public static Dictionary<string, string> VADictEinkauf = new Dictionary<string, string>
         {
             {"0","0"},
             {"1","1"},
@@ -2006,7 +2065,7 @@ namespace Data2Check
         };
 
         //Lieferbedingungen NUR EINKAUF
-        public Dictionary<string, string> LbdDictEinkauf = new Dictionary<string, string>
+        public static  Dictionary<string, string> LbdDictEinkauf = new Dictionary<string, string>
         {
             {"1","1"},
             {"2","2"},
@@ -2072,7 +2131,7 @@ namespace Data2Check
         }
 
         //Bundesländer Dictionary
-        public Dictionary<string, string> BundeslandDict = new Dictionary<string, string>{
+        public static Dictionary<string, string> BundeslandDict = new Dictionary<string, string>{
             {"63928", "BWÜ"},
             {"64754", "BWÜ"},
             {"68159", "BWÜ"},
@@ -10246,7 +10305,7 @@ namespace Data2Check
         };
 
         //Dictionary Waehrung
-        public Dictionary<string, string> WaehrungDict = new Dictionary<string, string>
+        public static Dictionary<string, string> WaehrungDict = new Dictionary<string, string>
         {
             {"EUR", "0"},
 
@@ -10486,7 +10545,7 @@ namespace Data2Check
         };
 
         //Anredenkonvertierung
-        public Dictionary<string, string> anredenDict = new Dictionary<string, string>()
+        public static Dictionary<string, string> anredenDict = new Dictionary<string, string>()
             {
                 {"Dear Mr.", "Sir"},
                 {"Dear Mrs.", "Madam"},
@@ -14527,7 +14586,7 @@ namespace Data2Check
         };
 
         //Füllmengen Liste
-        public List<string> fuellmengenList = new List<string>()
+        public static List<string> fuellmengenList = new List<string>()
         {
             {"4407-01-0000-0"},
 {"4407-01-0000-7"},
@@ -20837,13 +20896,13 @@ namespace Data2Check
         };
 
         // Liste RgZahler SDL
-        public List<string> RGZahlerSDLList = new List<string>()
+        public static List<string> RGZahlerSDLList = new List<string>()
         {
 
         };
 
         // JungheinrichDictionary
-        public Dictionary<string, string> JungheinrichDict = new Dictionary<string, string>()
+        public static  Dictionary<string, string> JungheinrichDict = new Dictionary<string, string>()
         {
             {"29283","129283"},
             {"29365","129283"},
@@ -20870,7 +20929,7 @@ namespace Data2Check
         };
 
         // Liste Ländercodes UstId 
-        public List<string> LandUstidList = new List<string>()
+        public static List<string> LandUstidList = new List<string>()
         {
 
             {"BE"},
