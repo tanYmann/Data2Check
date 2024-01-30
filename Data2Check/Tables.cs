@@ -13,6 +13,7 @@ namespace Data2Check
 
         public Tables() 
         {
+            s_Kunde = new DataTable("DU_Kunde");
             SetColsKunde(s_Kunde);
         }
 

@@ -20,15 +20,14 @@ namespace Data2Check
 {
     public partial class MainWindow : Window
     {
-        private System.Timers.Timer timer;
+        private System.Timers.Timer timer = new System.Timers.Timer();
         static DataTable Atradius = new DataTable();
-        static string Path = @"c:\tmp\DataCheck\";
         static OdbcConnection OdbcSDL = new OdbcConnection("DSN=Parity_SDL;Pooling=true;");
         static OdbcConnection OdbcHBS = new OdbcConnection("DSN=Parity_HBS;Pooling=true;");
         static string preString { get; set; }
         static int Standort = 1;
         public OdbcConnection[] Connections = new OdbcConnection[] { OdbcSDL, OdbcHBS };
-        static string ASCIIPath = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\transASCIIact\test\";
+        static string ASCIIPath = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\transASCIIact\";
         static string DateFile = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\KundenLieferanten\LastDate.txt";
         static CancellationTokenSource cancellation = new CancellationTokenSource();
         const string RegistryKeyString = "Data2Check";
@@ -41,7 +40,7 @@ namespace Data2Check
         bool WaitTxt = false;
         DateTime Endtime = new DateTime();
         static string LogFile = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\Logger.txt";
-
+        static bool timerInitialized = false; 
         public async Task MainAsync()
         {
             while (!CheckNetwork())
@@ -55,7 +54,6 @@ namespace Data2Check
         // MainWindoiw
         public MainWindow()
         {
-            this.Endtime = SetEndTime(new TimeSpan(24, 0, 0));
             InitializeComponent();
             InitializeNotifyIcon();
             _ = Task.Run(() => ExportData());
@@ -73,29 +71,29 @@ namespace Data2Check
         }
 
         //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
-        void InitializeTimer()
+        private void InitializeTimer()
         {
             timer = new System.Timers.Timer
             {
                 Interval = 1000, // Timer-Intervall in Millisekunden (hier 1 Sekunde)
                 AutoReset = true
+                
             };
 
             timer.Elapsed += TimerElapsed;
             timer.Start();
-
         }
                                                 
         // Endzeit des Timers
         DateTime SetEndTime(TimeSpan span)
         {
             DateTime now = DateTime.Now;
-            now = now.AddMinutes(22);
+            now += span;
             return now;
         }
 
         // Vergangene Zeit
-        void TimerElapsed(object sender, ElapsedEventArgs e)
+        async void TimerElapsed(object sender, ElapsedEventArgs e)
         {
             TimeSpan remainingTime = NextExecution(Endtime);
             System.Windows.Application.Current.Dispatcher.Invoke(() => SetRemainingTime(remainingTime));
@@ -103,8 +101,7 @@ namespace Data2Check
             if (remainingTime <= TimeSpan.Zero)
             {
                 timer.Stop();
-                _ = Task.Run(() => ExportData());
-
+                await Task.Run(() => ExportData());
             }
         }
 
@@ -118,7 +115,7 @@ namespace Data2Check
         TimeSpan NextExecution(DateTime targetTime)
         {
             DateTime now = DateTime.Now;
-            DateTime targetDateTime = new DateTime(now.Year, now.Month, now.Day, targetTime.Hour, targetTime.Minute, targetTime.Second);
+            DateTime targetDateTime = new DateTime(now.Year, now.Month, now.Day, targetTime.Hour , targetTime.Minute, targetTime.Second );
 
             if (WaitTxt == false)
             {
@@ -135,15 +132,20 @@ namespace Data2Check
                     SetText(".");
                 });
             }
+            
+            
+            TimeSpan span = now - targetTime;
+            double doubl = span.TotalMilliseconds;
 
-            return targetDateTime - now;
-        }
+            if (span.TotalMilliseconds < -1)
+            {
+                doubl = span.TotalMilliseconds * (-1);
+                
+            }
 
-        // Setzen  des Statustext
-        string SetStatusTxt(string text)
-        {
-            string statusTxt = text;
-            return statusTxt;
+            span = TimeSpan.FromMilliseconds(doubl);
+
+            return span;
         }
 
         // Autostart überprüfen
@@ -308,7 +310,7 @@ namespace Data2Check
             CancellationToken token = cancellation.Token;
             DataTable dataTable = new DataTable();
             operations.FillAtradius(Atradius);
-
+            
             foreach (OdbcConnection conn in Connections)
             {
                 await checkOdbc(conn);
@@ -322,6 +324,7 @@ namespace Data2Check
                 UpdateProgressBar(10);
                 SetText("Vorbereitung abgeschlossen. \n");
                 Dictionary<string, string> dict = new Dictionary<string, string>();
+
                 try
                 {
                     if (conn.State != ConnectionState.Open)
@@ -871,8 +874,9 @@ namespace Data2Check
                             {
                                 dataTable.Load(command.ExecuteReader());
                             }
-
+                            
                             queriesMethods.Table2CSV(dataTable, ASCIIPath, preString);
+                            await Task.Delay(100);
                             SetText("[" + DateTime.Now.ToString() + "]" + preString + dataTable.TableName + " wurde exportiert. \n");
                             UpdateProgressBar(10);
                         }
@@ -916,6 +920,20 @@ namespace Data2Check
                 });
             }
 
+            DateTime time = DateTime.Now;
+            //DateTime time = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day,2,30,0);
+            //time = time.AddDays(1);
+            time = time.AddMinutes(3);
+            TimeSpan timeSpan = DateTime.Now.Subtract(time);
+            double spanDouble = timeSpan.TotalMilliseconds;
+            
+            if (timeSpan.TotalMilliseconds < 0)
+            {
+                 spanDouble = timeSpan.TotalMilliseconds * (-1);                
+            }
+
+            TimeSpan time1 = TimeSpan.FromMilliseconds(spanDouble);  
+            Endtime = SetEndTime(time1);
             InitializeTimer();
         }
 
