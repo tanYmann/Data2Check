@@ -20,6 +20,9 @@ namespace Data2Check
 {
     public partial class MainWindow : Window
     {
+
+        //Variablen
+        SQLMethods methods = new SQLMethods();
         private System.Timers.Timer timer = new System.Timers.Timer();
         static DataTable Atradius = new DataTable();
         static OdbcConnection OdbcSDL = new OdbcConnection("DSN=Parity_SDL;Pooling=true;");
@@ -27,7 +30,7 @@ namespace Data2Check
         static string preString { get; set; }
         static int Standort = 1;
         public OdbcConnection[] Connections = new OdbcConnection[] { OdbcSDL, OdbcHBS };
-        static string ASCIIPath = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\transASCIIact\";
+        static string ASCIIPath = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\transASCIIact\test\";
         static string DateFile = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\KundenLieferanten\LastDate.txt";
         static CancellationTokenSource cancellation = new CancellationTokenSource();
         const string RegistryKeyString = "Data2Check";
@@ -38,16 +41,19 @@ namespace Data2Check
         static Operations operations = new Operations();
         static SQLMethods queriesMethods = new SQLMethods();
         bool WaitTxt = false;
-        DateTime Endtime = new DateTime();
+        private static readonly DateTime dateTime = new DateTime();
+        public DateTime Endtime = dateTime;
         static string LogFile = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\Logger.txt";
-        static bool timerInitialized = false; 
+        //static bool timerInitialized = false;
+
+        //asynchrone Mainmethode
         public async Task MainAsync()
         {
             while (!CheckNetwork())
             {
                 SetText("Netzwerkverbindung nicht bereit.");
             }
-                       
+
             await ExportData();
         }
 
@@ -56,9 +62,10 @@ namespace Data2Check
         {
             InitializeComponent();
             InitializeNotifyIcon();
-            _ = Task.Run(() => ExportData());
+            _ = Task.Run(async () => await ExportData());
         }
 
+        //Schreiben in den Logfile
         void WriteLogFile(string line)
         {
             using (FileStream stream = new FileStream(LogFile, FileMode.Append, FileAccess.Write))
@@ -70,82 +77,12 @@ namespace Data2Check
             }
         }
 
-        //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
-        private void InitializeTimer()
-        {
-            timer = new System.Timers.Timer
-            {
-                Interval = 1000, // Timer-Intervall in Millisekunden (hier 1 Sekunde)
-                AutoReset = true
-                
-            };
-
-            timer.Elapsed += TimerElapsed;
-            timer.Start();
-        }
-                                                
         // Endzeit des Timers
         DateTime SetEndTime(TimeSpan span)
         {
             DateTime now = DateTime.Now;
             now += span;
             return now;
-        }
-
-        // Vergangene Zeit
-        async void TimerElapsed(object sender, ElapsedEventArgs e)
-        {
-            TimeSpan remainingTime = NextExecution(Endtime);
-            System.Windows.Application.Current.Dispatcher.Invoke(() => SetRemainingTime(remainingTime));
-
-            if (remainingTime <= TimeSpan.Zero)
-            {
-                timer.Stop();
-                await Task.Run(() => ExportData());
-            }
-        }
-
-        // Anzeige der verbleibenden Zeit bis zur nächsten Ausführung
-        void SetRemainingTime(TimeSpan remainingTime)
-        {
-            txtRemainingTime.Text = $"Zeit bis zum nächsten Export: {remainingTime.Hours}h {remainingTime.Minutes}m {remainingTime.Seconds}s";
-        }
-
-        // Zeitspanne bis zur nächsten Ausführung
-        TimeSpan NextExecution(DateTime targetTime)
-        {
-            DateTime now = DateTime.Now;
-            DateTime targetDateTime = new DateTime(now.Year, now.Month, now.Day, targetTime.Hour , targetTime.Minute, targetTime.Second );
-
-            if (WaitTxt == false)
-            {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    SetText("Warten auf nächste Ausführung \n");
-                    WaitTxt = true;
-                });
-            }
-            else
-            {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    SetText(".");
-                });
-            }
-            
-            
-            TimeSpan span = now - targetTime;
-            double doubl = span.TotalMilliseconds;
-
-            if (span.TotalMilliseconds < -1)
-            {
-                doubl = span.TotalMilliseconds * (-1);
-                
-            }
-
-            span = TimeSpan.FromMilliseconds(doubl);
-
-            return span;
         }
 
         // Autostart überprüfen
@@ -211,7 +148,6 @@ namespace Data2Check
             return (dateRead, dateWrite);
         }
 
-
         // Prüfen der Netzwerkverbindung
         bool CheckNetwork()
         {
@@ -255,7 +191,7 @@ namespace Data2Check
         }
 
         // ODBC-Treiber prüfen
-        async Task <bool> checkOdbc(OdbcConnection connection)
+        async Task<bool> checkOdbc(OdbcConnection connection)
         {
             if (connection.Driver == null)
             {
@@ -301,18 +237,19 @@ namespace Data2Check
             return check;
         }
 
-
         // Der Datenexport
         async Task ExportData()
         {
-            Tables tables = new Tables();
-            Standort = 1;
-            CancellationToken token = cancellation.Token;
-            DataTable dataTable = new DataTable();
-            operations.FillAtradius(Atradius);
             
+            Tables tables = new Tables();
+            CancellationToken token = cancellation.Token;
+            
+            operations.FillAtradius(Atradius);
+
             foreach (OdbcConnection conn in Connections)
             {
+                DataTable dataTable = new DataTable();
+                Standort = int.Parse(methods.GetStandort(conn));
                 await checkOdbc(conn);
 
                 if (token.IsCancellationRequested)
@@ -356,7 +293,7 @@ namespace Data2Check
                             {
                                 conn.Open();
                             }
-
+                          
                             if (key.Key.ToString() == "DU_Kunde")
                             {
                                 string query = string.Format(key.Value, GetLastDate().Date2Use);
@@ -872,15 +809,39 @@ namespace Data2Check
                             }
                             else
                             {
-                                dataTable.Load(command.ExecuteReader());
+                                try
+                                {
+                                    dataTable.Load(command.ExecuteReader());
+                                }
+                                catch(Exception ex)
+                                {
+                                    txtStatus.Text = ex.Message + ex.Source;
+                                    txtStatus.BringIntoView();
+                                }
                             }
-                            
+                           
                             queriesMethods.Table2CSV(dataTable, ASCIIPath, preString);
+                            
                             await Task.Delay(100);
-                            SetText("[" + DateTime.Now.ToString() + "]" + preString + dataTable.TableName + " wurde exportiert. \n");
-                            UpdateProgressBar(10);
+                            SetText("[" + DateTime.Now.ToString() + "] : " + preString + dataTable.TableName + "wurde exportiert. \n");
+         
+                            while(conn.State != ConnectionState.Closed)
+                            {
+                                try
+                                {
+                                    conn.Close();
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+                            }
+
                         }
+                        UpdateProgressBar(10);
+                        UpdateProgressBar(10);
                     }
+            
                 }
                 catch (Exception ex)
                 {
@@ -892,49 +853,94 @@ namespace Data2Check
                 }
                 finally
                 {
-                    if (conn.State == ConnectionState.Open)
+                    UpdateProgressBar(10);
+                    testCounter++;
+
+                    using (FileStream stream = new FileStream(@"C:\tmp\Testlaeufe.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite))
+                    using (StreamWriter writer = new StreamWriter(stream))
                     {
-                        conn.Close();
+                        writer.BaseStream.Position = 0;
+                        writer.WriteLine("Testläufe absolviert : " + TestCounter.ToString());
                     }
 
-                    Standort++;
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        progressbar.Value = 0;
+                        progressbar.BringIntoView();
+                        InitializeTimer();
+                    });
                 }
+            }
+
+
+        }
+
+        //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
+        private void InitializeTimer()
+        {
+            timer = new System.Timers.Timer
+            {
+                Interval = 1000, // Timer-Intervall in Millisekunden (hier 1 Sekunde)
+                AutoReset = true
+
+            };
+
+            Endtime = DateTime.Now.AddSeconds(55);
+            timer.Elapsed += TimerElapsed;
+            timer.Start();
+        }
+
+        // Vergangene Zeit
+        async void TimerElapsed(object sender, ElapsedEventArgs e)
+        {
             
+            TimeSpan remainingTime = NextExecution(Endtime);
+            System.Windows.Application.Current.Dispatcher.Invoke(() => 
+            SetRemainingTime(remainingTime));
 
-                int i = 0;
-                UpdateProgressBar(10);
-                UpdateProgressBar(10);
-                testCounter++;
-
-                using (FileStream stream = new FileStream(@"C:\tmp\Testlaeufe.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite))
-                using (StreamWriter writer = new StreamWriter(stream))
+            if (remainingTime <= TimeSpan.Zero)
+            {
+                timer.Stop();
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    writer.BaseStream.Position = 0;
-                    writer.WriteLine("Testläufe absolviert : " + TestCounter.ToString());
-                }
+                    Task.Run(async ()=> await ExportData());
+                });
 
+            }
+        }
+
+        // Anzeige der verbleibenden Zeit bis zur nächsten Ausführung
+        void SetRemainingTime(TimeSpan remainingTime)
+        {
+            txtRemainingTime.Text = $"Zeit bis zum nächsten Export: {remainingTime.Hours}h {remainingTime.Minutes}m {remainingTime.Seconds}s";
+        }
+
+        // Zeitspanne bis zur nächsten Ausführung
+        public TimeSpan NextExecution(DateTime targetTime)
+        {
+            DateTime now = DateTime.Now;
+            DateTime targetDateTime = new DateTime(targetTime.Year, targetTime.Month, targetTime.Day, targetTime.Hour,targetTime.Minute,targetTime.Second);
+
+            if (WaitTxt == false)
+            {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    progressbar.Value = 0;
-                    progressbar.BringIntoView();
+                    SetText("Warten auf nächste Ausführung \n");
+                    WaitTxt = true;
+                });
+            }
+            else
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    SetText(".");
                 });
             }
 
-            DateTime time = DateTime.Now;
-            //DateTime time = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day,2,30,0);
-            //time = time.AddDays(1);
-            time = time.AddMinutes(3);
-            TimeSpan timeSpan = DateTime.Now.Subtract(time);
-            double spanDouble = timeSpan.TotalMilliseconds;
-            
-            if (timeSpan.TotalMilliseconds < 0)
-            {
-                 spanDouble = timeSpan.TotalMilliseconds * (-1);                
-            }
+            TimeSpan span = targetTime-now;
 
-            TimeSpan time1 = TimeSpan.FromMilliseconds(spanDouble);  
-            Endtime = SetEndTime(time1);
-            InitializeTimer();
+
+            return span;
         }
 
         // Notify-Icon beim Minimieren
@@ -948,7 +954,7 @@ namespace Data2Check
 
             notifyIcon.Click += NotifyIcon_Click;
         }
-
+        
         // Click auf Icon
         void NotifyIcon_Click(object sender, EventArgs e)
         {
@@ -958,23 +964,23 @@ namespace Data2Check
 
         // Minimieren des Fensters
         void OnStateChanged(EventArgs e)
-            {
-                base.OnStateChanged(e);
+        {
+            base.OnStateChanged(e);
 
-                if (WindowState == WindowState.Minimized)
-                {
-                    Hide();
-                    notifyIcon.ShowBalloonTip(1000, "Anwendung minimiert", "Die Anwendung wurde minimiert.", ToolTipIcon.Info);
-                }
+            if (WindowState == WindowState.Minimized)
+            {
+                Hide();
+                notifyIcon.ShowBalloonTip(1000, "Anwendung minimiert", "Die Anwendung wurde minimiert.", ToolTipIcon.Info);
             }
+        }
 
         // Schließen des Fensters
         void OnClosing(System.ComponentModel.CancelEventArgs e)
-            {
-                base.OnClosing(e);
-                // Icon bei Schließen des Fensters entfernen
-                notifyIcon.Dispose();
-            }
+        {
+            base.OnClosing(e);
+            // Icon bei Schließen des Fensters entfernen
+            notifyIcon.Dispose();
+        }
 
         // Methode zum Anzeigen des Status Text
         void SetText(string text)
@@ -988,56 +994,56 @@ namespace Data2Check
 
         // Standortkürzel für Dateinamen
         void SetPreString(string connectionString)
-            {
-                preString = string.Empty;
+        {
+            preString = string.Empty;
 
-                if (connectionString.Contains("_SDL"))
-                {
-                    preString = "SDL_";
-                }
-                else if (connectionString.Contains("_HBS"))
-                {
-                    preString = "HBS_";
-                }
+            if (connectionString.Contains("_SDL"))
+            {
+                preString = "SDL_";
             }
+            else if (connectionString.Contains("_HBS"))
+            {
+                preString = "HBS_";
+            }
+        }
 
         // Bewegen der ProgressBar
         void UpdateProgressBar(int value)
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    progressbar.Value += value;
-                    progressbar.BringIntoView();
-                });
-            }
+                progressbar.Value += value;
+                progressbar.BringIntoView();
+            });
+        }
 
         // Shortcut im Autostart anlegen
         void CreateShortcutInAutostart()
+        {
+            try
             {
-                try
+                string startupFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                FileInfo appFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                FileInfo shortcutFileInfo = new FileInfo(startupFolderPath + "\\Data2Check.lnk");
+
+                if (shortcutFileInfo.Exists)
                 {
-                    string startupFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-                    FileInfo appFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                    FileInfo shortcutFileInfo = new FileInfo(startupFolderPath + "\\Data2Check.lnk");
-
-                    if (shortcutFileInfo.Exists)
-                    {
-                        shortcutFileInfo.Delete();
-                    }
-
-                    using (StreamWriter writer = new StreamWriter(shortcutFileInfo.FullName))
-                    {
-                        writer.WriteLine("[Data2Check]");
-                        writer.WriteLine("URL=file:///" + appFileInfo.FullName.Replace('\\', '/'));
-                        writer.WriteLine("IconIndex=0");
-                        writer.WriteLine("IconFile=" + appFileInfo.FullName);
-                    }
+                    shortcutFileInfo.Delete();
                 }
-                catch (Exception ex)
+
+                using (StreamWriter writer = new StreamWriter(shortcutFileInfo.FullName))
                 {
-                    System.Windows.MessageBox.Show("Fehler : " + ex.Message);
+                    writer.WriteLine("[Data2Check]");
+                    writer.WriteLine("URL=file:///" + appFileInfo.FullName.Replace('\\', '/'));
+                    writer.WriteLine("IconIndex=0");
+                    writer.WriteLine("IconFile=" + appFileInfo.FullName);
                 }
             }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show("Fehler : " + ex.Message);
+            }
+        }
 
         //Button zum Anlegen des Shortcuts in Autostart
         void ButtonCreateShortcut_Click(object sender, RoutedEventArgs e)
@@ -1049,7 +1055,6 @@ namespace Data2Check
         void BtnStartClick(object sender, RoutedEventArgs e)
         {
             Task.Run(() => ExportData());
-
         }
 
         // Button zum Öffnen der Optionen
@@ -1065,9 +1070,17 @@ namespace Data2Check
             {
                 window1.Show();
             }
+
         }
 
     }
 }
+    
+
+
+
+
+
+
 
 

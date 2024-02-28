@@ -14,9 +14,17 @@ namespace Data2Check
 {
     public class Operations
     {
+
+        public Operations()
+        {
+
+        }
+
+        //Tabelle schreiben
         public DataTable WriteTable(OdbcCommand command, DataTable table)
         {
-         
+
+            DataTable dataTable = table.Copy();
             string cmd = command.CommandText;
             DataSet dataSet = new DataSet();
             Type type = typeof(string);
@@ -32,7 +40,7 @@ namespace Data2Check
 
             try
             {
-                table.Load(command.ExecuteReader());
+                dataTable.Load(command.ExecuteReader());
             }
 
             catch (Exception oex)
@@ -80,6 +88,8 @@ namespace Data2Check
 
             return clone;
         }
+
+        //Kobensenliste füllen
         public void FillUstidKobensen(DataTable kobensen)
         {
             int count = 0;
@@ -151,10 +161,16 @@ namespace Data2Check
 
             }
         }
+
+        //Pfad Datei letztes Exportdatum
         public FileInfo FileInfoDate = new FileInfo(Directory.GetCurrentDirectory().ToString() + "\\LastDate.txt");
+
+
         public string Street { get; set; }
         public string HNr { get; set; }
         public string Date { get; set; }
+
+        //Zahlen in Liste 0-9
         public static List<string> ListZahlen = new List<string>()
         {
             {"0"},
@@ -168,10 +184,6 @@ namespace Data2Check
             {"9"}
         };
 
-        public Operations()
-        {
-
-        }
         
         // Datumsstring
         public string GetLastDate()

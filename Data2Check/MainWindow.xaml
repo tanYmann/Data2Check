@@ -7,29 +7,43 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="495" Width="1418">
     <Grid>
-        <StackPanel Orientation="Vertical">
-            <StackPanel Orientation="Horizontal" Height="368">
-                <StackPanel Orientation="Vertical">
-                    <Frame x:Name="Frame" Background="Transparent" Height="Auto" Width="Auto"></Frame>
-                    <TextBlock x:Name="TextBoxHeader" Foreground="White" Width="821" Margin="0,0,0,28.6" >
-                        <TextBlock.Background>
-                            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-                                <GradientStop Color="Black" Offset="0"/>
-                                <GradientStop Color="#FF008BFF" Offset="1"/>
-                                <GradientStop Color="#FF000D19" Offset="0.1"/>
-                                <GradientStop Color="#FF001529" Offset="0.319"/>
-                                <GradientStop Color="#FF003564" Offset="0.446"/>
-                                <GradientStop Color="#FF006CC7" Offset="0.801"/>
-                            </LinearGradientBrush>
-                        </TextBlock.Background><Run Text="  A  U  T  O  E  X  P  O  R  T  "/></TextBlock>
-                    <StackPanel Orientation="Vertical">
-                        <Canvas Width="15"></Canvas>
-                        <TextBlock x:Name="txtStatus" Text="" Height="264" Width="1407" HorizontalAlignment="Left"/>
-                        <TextBlock x:Name="txtRemainingTime" Height="53" Width="1399" Background="Black" HorizontalAlignment="Left" FontSize="24" TextAlignment="Center" Foreground="#FFFF0A0A">
-                        </TextBlock>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Border Grid.Row="0" Background="LightGray" Height="45" VerticalAlignment="Top">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Height="368">
+                    <StackPanel Orientation="Vertical" Margin="0,0,0,88">
+                        <Frame x:Name="Frame" Background="Transparent" Height="Auto" Width="Auto"></Frame>
+                        <TextBlock x:Name="TextBoxHeader" Foreground="White" Width="1410" Height="45"  >
+                            <TextBlock.Background>
+                                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                    <GradientStop Color="Black" Offset="0"/>
+                                    <GradientStop Color="#FF008BFF" Offset="1"/>
+                                    <GradientStop Color="#FF000D19" Offset="0.1"/>
+                                    <GradientStop Color="#FF001529" Offset="0.319"/>
+                                    <GradientStop Color="#FF003564" Offset="0.446"/>
+                                    <GradientStop Color="#FF006CC7" Offset="0.801"/>
+                                </LinearGradientBrush>
+                            </TextBlock.Background>
+                            <Run Text="  A  U  T  O  E  X  P  O  R  T  "/></TextBlock>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
+        </Border>
+        <Border Grid.Row="1" Background="White">
+            <StackPanel Orientation="Vertical">
+                <Canvas Width="15"></Canvas>
+                <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" ClipToBounds="True" Height="auto">
+                    <TextBlock x:Name="txtStatus" Text="" Height="auto" Width="Auto" HorizontalAlignment="Left" TextWrapping="WrapWithOverflow"/>
+                </ScrollViewer>
+                <TextBlock x:Name="txtRemainingTime" Height="100" Width="Auto" Background="Black" HorizontalAlignment="Stretch"  FontSize="24" TextAlignment="Center" Foreground="#FFFF0A0A"/>
+                <ProgressBar x:Name="progressbar" IsManipulationEnabled="True" Height="50" VerticalAlignment="Top" Width="Auto" />
+            </StackPanel>
+        </Border>
+        <Border Grid.Row="2" Background="LightGray" Height="74" VerticalAlignment="Top" >
             <StackPanel Orientation="Horizontal" Height="55" VerticalAlignment="Center">
                 <Canvas Width="55"/>
                 <Button x:Name="ButtonStart" Content=" S T A R T " HorizontalAlignment="Center" Width="85"/>
@@ -38,16 +52,6 @@
                 <Canvas Width="50"></Canvas>
                 <TextBlock x:Name="ElapsedTimeText" HorizontalAlignment="Right" FontSize="24" Width="290"/>
             </StackPanel>
-        </StackPanel>
-        <ProgressBar x:Name="progressbar" IsManipulationEnabled="True" Margin="2,463,2,-33" Height="34" VerticalAlignment="Top">
-            <ProgressBar.RenderTransform>
-                <TransformGroup>
-                    <ScaleTransform ScaleY="-1"/>
-                    <SkewTransform/>
-                    <RotateTransform/>
-                    <TranslateTransform/>
-                </TransformGroup>
-            </ProgressBar.RenderTransform>
-        </ProgressBar>
+        </Border>
     </Grid>
 </Window>

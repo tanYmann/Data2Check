@@ -49,7 +49,7 @@ namespace Data2Check
             return table;
         }
 
-        string GetStandort(OdbcConnection connection)
+        public  string GetStandort(OdbcConnection connection)
         {
             string standort = string.Empty;
 
@@ -266,7 +266,7 @@ namespace Data2Check
                 "from kunden,anschrift " +
                 "where kdn_lfdnr = ansnr " +
                 "and kdn_typ = 'D' " +
-                "group by kdn_kontonr"},
+                "group by kdn_kontonr "},
 
             {"Lieferanten_ASCII","select " +
                     "kdn_kontonr," +
@@ -279,7 +279,7 @@ namespace Data2Check
                     "and kdn_kontonr not like ('82013') " +
                     "and kdn_info_001 not like ('gelöscht') " +
                     "and kdn_typ = 'K' " +
-                    "group by kdn_kontonr"},
+                    "group by kdn_kontonr "},
 
             {"Belege_ASCII","select " +
                 "bel_nr," +
@@ -291,7 +291,7 @@ namespace Data2Check
                 "and kdn_kontonr = bel_kontonr " +
                 "and his_belnr = bel_nr " +
                 "and bel_typ = '1' " +
-                "group by bel_nr" }
+                "group by bel_nr " }
         };
 
         //SQL-Queries HBS
@@ -476,7 +476,8 @@ namespace Data2Check
                     "where kdn_lfdnr = ansnr " +
                     "and kdn_typ = 'K' " +
                     "and kdn_kontonr not like '99999' " +
-                    "order by kdn_kontonr"},
+                    "group by kdn_kontonr " +
+                ""},
 
             {"Kunden_ASCII","select " +
                    "kdn_kontonr," +
@@ -487,7 +488,9 @@ namespace Data2Check
                    "from kunden,anschrift " +
                    "where kdn_lfdnr = ansnr " +
                    "and kdn_typ = 'D' " +
-                   "order by kdn_kontonr"}
+                   "group by kdn_kontonr " +
+                   ""
+            }
         };
 
     
@@ -776,7 +779,8 @@ namespace Data2Check
                           "and kdn_typ = 'D' " +
                           "and kdn_aenderung > {0} " +
                           "limit 10 " +
-                          "GROUP BY kdn_kontonr ";
+                          "GROUP BY kdn_kontonr " +
+                          "";
             }
 
             return query;
@@ -852,7 +856,7 @@ namespace Data2Check
                  "from anschrift, kunden " +
                  "where ansnr = kdn_lfdnr " +
                  "and kdn_aenderung > " + datum + " " +
-                 "limit 10 ";
+                 " ";
             }
 
             if (standort == "2")
@@ -923,7 +927,7 @@ namespace Data2Check
                     "and kdn_typ = 'K' " +
                     "and kdn_info_001 not like ('gelöscht') " +
                     "and kdn_info_001 not like ('gesperrt') " +
-                    "limit 10 ";
+                    " ";
             }
 
             return query;
@@ -956,7 +960,7 @@ namespace Data2Check
                     "select bel_nr,bel_zbnr,kdn_kontonr, his_renr " +
                     "from beleg,kunden,historie " +
                     "where bel_datum > 20221231 and kdn_kontonr = bel_kontonr and his_belnr = bel_nr and bel_typ = '1' " +
-                    "limit 10 "
+                    ""
         };
 
         //SQL-Abfrage Kunden transASCIIact
@@ -975,7 +979,7 @@ namespace Data2Check
                     "from kunden,anschrift,historie " +
                     "where kdn_lfdnr = ansnr " +
                     "and kdn_typ = 'D' " +
-                    "limit 10 ";
+                    " ";
             }
             else if (standort == "2")
             {
@@ -988,7 +992,7 @@ namespace Data2Check
                    "from kunden,anschrift " +
                    "where kdn_lfdnr = ansnr " +
                    "and kdn_typ = 'D' " +
-                   "limit 10 ";
+                   " ";
 
             }
 
@@ -1013,7 +1017,7 @@ namespace Data2Check
                     "and kdn_kontonr not like ('82013') " +
                     "and kdn_info_001 not like ('gelöscht') " +
                     "and kdn_typ = 'K' " +
-                    "limit 10 ";
+                    " ";
             }
 
             if (standort == "2")
@@ -1027,7 +1031,7 @@ namespace Data2Check
                     "from kunden,anschrift " +
                     "where kdn_lfdnr = ansnr " +
                     "and kdn_typ = 'K'" +
-                    "limit 10 ";
+                    " ";
             }
             return query;
         }
@@ -1046,7 +1050,7 @@ namespace Data2Check
                 "and kdn_kontonr = bel_kontonr " +
                 "and his_belnr = bel_nr " +
                 "and bel_typ = '1' " +
-                "limit 10 ";
+                "";
 
             return query;
         }
