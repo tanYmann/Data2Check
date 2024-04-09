@@ -7,6 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.ServiceProcess;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -45,7 +46,7 @@ namespace Data2Check
         public DateTime Endtime = dateTime;
         static string LogFile = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\Logger.txt";
         //static bool timerInitialized = false;
-
+        Window1 Window1 = new Window1();
         //asynchrone Mainmethode
         public async Task MainAsync()
         {
@@ -62,6 +63,7 @@ namespace Data2Check
         {
             InitializeComponent();
             InitializeNotifyIcon();
+            SetRegistryKey();
             _ = Task.Run(async () => await ExportData());
         }
 
@@ -240,10 +242,10 @@ namespace Data2Check
         // Der Datenexport
         async Task ExportData()
         {
-            
+
             Tables tables = new Tables();
             CancellationToken token = cancellation.Token;
-            
+
             operations.FillAtradius(Atradius);
 
             foreach (OdbcConnection conn in Connections)
@@ -293,9 +295,10 @@ namespace Data2Check
                             {
                                 conn.Open();
                             }
-                          
+
                             if (key.Key.ToString() == "DU_Kunde")
-                            {
+                            {/*
+                                string konto = string.Empty;
                                 string query = string.Format(key.Value, GetLastDate().Date2Use);
                                 Operations operations = new Operations();
                                 DataTable kobensen = new DataTable();
@@ -305,6 +308,8 @@ namespace Data2Check
 
                                 foreach (DataRow rowKd in dataTable.Rows)
                                 {
+                                    konto = rowKd[0].ToString();
+
                                     try
                                     {
                                         if (Atradius.Rows.Contains(rowKd[0].ToString()))
@@ -416,23 +421,6 @@ namespace Data2Check
                                         {
                                             rowKd[50] = "";
                                         }
-                                    }
-
-                                    if (rowKd[53].ToString() != "0")
-                                    {
-
-                                        if (Dictionaries.VerbandDict.ContainsKey(rowKd[53].ToString()))
-                                        {
-                                            rowKd[53] = Dictionaries.VerbandDict[rowKd[53].ToString()];
-                                        }
-                                        else
-                                        {
-                                            rowKd[53] = "";
-                                        }
-                                    }
-                                    else
-                                    {
-                                        rowKd[53] = string.Empty;
                                     }
 
 
@@ -603,9 +591,11 @@ namespace Data2Check
 
                                     rowKd[86] = "Ja";
                                 }
+                                */
                             }
                             else if (key.Key.ToString() == "DU_Lieferant")
                             {
+                                /*
                                 string query = string.Format(key.Value, GetLastDate().Date2Use);
                                 Operations operations = new Operations();
                                 DataTable kobensen = new DataTable();
@@ -806,6 +796,7 @@ namespace Data2Check
                                     }
 
                                 }
+                                */
                             }
                             else
                             {
@@ -813,19 +804,19 @@ namespace Data2Check
                                 {
                                     dataTable.Load(command.ExecuteReader());
                                 }
-                                catch(Exception ex)
+                                catch (Exception ex)
                                 {
                                     txtStatus.Text = ex.Message + ex.Source;
                                     txtStatus.BringIntoView();
                                 }
                             }
-                           
+
                             queriesMethods.Table2CSV(dataTable, ASCIIPath, preString);
-                            
+
                             await Task.Delay(100);
                             SetText("[" + DateTime.Now.ToString() + "] : " + preString + dataTable.TableName + "wurde exportiert. \n");
-         
-                            while(conn.State != ConnectionState.Closed)
+
+                            while (conn.State != ConnectionState.Closed)
                             {
                                 try
                                 {
@@ -841,7 +832,7 @@ namespace Data2Check
                         UpdateProgressBar(10);
                         UpdateProgressBar(10);
                     }
-            
+
                 }
                 catch (Exception ex)
                 {
@@ -870,13 +861,13 @@ namespace Data2Check
                         InitializeTimer();
                     });
                 }
-            }
+                             
+                            }
+                                   
+                            }
 
-
-        }
-
-        //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
-        private void InitializeTimer()
+                            //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
+                            private void InitializeTimer()
         {
             timer = new System.Timers.Timer
             {
@@ -1054,27 +1045,927 @@ namespace Data2Check
         // Button zum manuellen Starten des Datenexports
         void BtnStartClick(object sender, RoutedEventArgs e)
         {
-            Task.Run(() => ExportData());
+            _ = Task.Run(async() => await ExportData());
         }
 
         // Button zum Öffnen der Optionen
         void ButtonOptions_Click(object sender, RoutedEventArgs e)
         {
-            Window1 window1 = new Window1();
-
-            if (window1.IsVisible)
+            if(Window1.WindowState != WindowState.Maximized)
             {
-                window1.BringIntoView();
+               
+            }
+            Window1.Activate();
+            Window1.Show();
+            if (!Window1.IsVisible)
+            {
+                Window1.BringIntoView();
             }
             else
             {
-                window1.Show();
+                Window1.Show();
             }
 
         }
+        /*
+        public DataTable GetKunden() 
+        { 
+            string limit = "";
 
+            DataTable dataTable = new DataTable("DU_Kunde");
+
+            if (System.Windows.MessageBox.Show("Für 9.3 exportieren ?", "Versionswahl", MessageBoxButton.YesNo) == MessageBoxResult.No)
+            {
+                string getKunde = "SELECT " +
+                    "kunden.kdn_kontonr," +
+                    "'@' as Profitcenter, " +
+                    "'', " +
+                    "anschrift.name_001, " +
+                    "anschrift.land, " +
+                    "anschrift.ort, " +
+                    "anschrift.anssuch, " +
+                    "anschrift.ans_suwo2, " +
+                    "'@', " +
+                    "'@'," +
+                    "'@', " +
+                    "'@', " +
+                    "anschrift.name_002," +
+                    "anschrift.name_003, " +
+                    "anschrift.plz," +
+                    " '@' AS Expr3, " +
+                    "anschrift.ans_teilort, " +
+                    "'@' AS Expr4, " +
+                    "anschrift.strasse, " +
+                    "'@' AS Expr5, " +
+                    "'Hausnummer' AS Hausnummer," +
+                    "'@' AS Bundesland, " +
+                    "anschrift.ans_pf_plz, " +
+                    "anschrift.ans_postfach, " +
+                    "'Ja' AS Expr8, " +
+                    "anschrift.ans_email, " +
+                    "anschrift.ans_homepage, " +
+                    "anschrift.ans_telex, " +
+                    "anschrift.ans_telefon, " +
+                    "anschrift.ans_telefax, " +
+                    "'@' AS Expr9, " +
+                    "anschrift.anssuch AS Expr10, " +
+                    "anschrift.ans_suwo2 AS Expr11, " +
+                    "'@' AS Expr12," +
+                    "kunden.kdn_x_branche, " +
+                    "'@' AS Expr13, " +
+                    "'@', " +
+                    "kdn_sprnr, " +
+                    "'@' AS Expr14, " +
+                    "'@' AS Expr15, " +
+                    "'@' AS Expr16, " +
+                    "'@' AS Expr17, " +
+                    "'@' AS Expr18, " +
+                    "kunden.kdn_erstellt, " +
+                    "persktn.pkt_kdn_lief_nr, " +
+                    "anschrift.ans_stnr, " +
+                    "'0'," +
+                    "anschrift.ans_ustid, " +
+                    "'@' AS Expr19, " +
+                    "kunden.kdn_faktkz, " +
+                    "persktn.pkt_rgzahler, " +
+                    "'@' AS Expr21, " +
+                    "'@' AS Expr22, " +
+                    "kunden.kdn_ekvnr, " +
+                    "(select f1e_x_ekname from f1ekverband where f1ekverband.f1e_x_eknr = kunden.kdn_ekvnr limit 1) AS 'f1ekname', " +
+                    "'@' AS Expr24, " +
+                    "'@' AS Expr25, " +
+                    "'@' AS Expr26, " +
+                    "'@' AS Expr27, " +
+                    "'@' AS Expr28, " +
+                    "'1', " +
+                    "'2', " +
+                    "'3', " +
+                    "'4', " +
+                    "'5', " +
+                    "'6', " +
+                    "'3', " +
+                    "'@' AS Expr36, " +
+                    "kdn_zbnr, " +
+                    "kunden.kdn_kredlimit, " +
+                    "kdn_c_ohneklm, " +
+                    "'2', " +
+                    "'@' AS Expr39, " +
+                    "'@' AS Expr40, " +
+                    "'@' AS Expr41, " +
+                    "'@' AS Expr42, " +
+                    "kunden.kdn_vsanr, " +
+                    "'1', " +
+                    "'1', " +
+                    "'@', " +
+                    "'@' AS Expr46, " +
+                    "kunden.kdn_kredvers, " +
+                    "'@' AS Expr48, " +
+                    "'@' AS Expr49, " +
+                    "kunden.kdn_x_adrsel, " +
+                    "kdn_x_adrsel||'_'||anschrift.land||'_'||kdn_vertrnr_001, " +
+                    "kdn_x_rabattausw, " +
+                    "'Ja' AS Expr50, " +
+                    "'Ja' AS Expr51, " +
+                    "'@' AS Expr52, " +
+                      "'', " +
+                      "'', " +
+                      "'0', " +
+                      "kdn_x_ust_wann " +
+                    "FROM kunden, anschrift,persktn " +
+                    "WHERE (persktn.pkt_ansnr = anschrift.ansnr) " +
+                    "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +
+                    "and kdn_typ = 'D' " +
+                    "and kdn_kontonr in (40404, 19433, 45509, 46911, 48763)";
+
+        OdbcCommand command = new OdbcCommand(getKunde, connection);
+        DataTable finalTable = Lists.Find(_ => _.TableName == dataTable.TableName);
+        dataTable = WriteTable(command, dataTable);
+
+                foreach (DataRow rowKd in dataTable.Rows)
+                {
+                    string konto = rowKd[0].ToString();
+
+                    try
+                    {
+                        if (Atradius.Rows.Contains(rowKd[0].ToString()))
+                        {
+                            foreach (DataRow row in Atradius.Rows)
+                            {
+                                if (row[0].ToString() == rowKd[0].ToString())
+                                {
+                                    rowKd[79] = "216426";
+                                    rowKd[80] = row[1];
+                                    rowKd[81] = row[4];
+                                    rowKd[82] = "B";
+                                    rowKd[83] = row[5];
+                                }
+}
+                        }
+                        else
+{
+    rowKd[79] = "@";
+    rowKd[80] = "@";
+    rowKd[81] = "@";
+    rowKd[82] = "@";
+    rowKd[83] = "@";
+}
+
+if (kobensen.Rows.Contains(rowKd[0].ToString()))
+{
+    foreach (DataRow row in kobensen.Rows)
+    {
+        if (row[0].ToString() == rowKd[0].ToString())
+        {
+            rowKd[47] = RemoveWhiteSpace(row[2].ToString());
+        }
     }
 }
+
+rowKd[0] = standort + rowKd[0].ToString();
+
+rowKd[7] = rowKd[5].ToString().ToUpper();
+
+try
+{
+    rowKd[34] = SetBrancheNr(rowKd[34].ToString());
+}
+
+catch (Exception e)
+{
+    Logger(e.Message);
+
+    rowKd[34] = "@";
+}
+
+if (rowKd[18] != null)
+{
+    if (rowKd[4].ToString() != "FR")
+    {
+        try
+        {
+            GetHnr(rowKd[18].ToString());
+
+            rowKd[18] = street;
+            rowKd[20] = hNr;
+        }
+        catch (Exception e)
+        {
+            Logger(e.Message);
+        }
+    }
+    else
+    {
+        rowKd[20] = "@";
+    }
+}
+
+rowKd[18] = CorrectStrasse(rowKd[18].ToString());
+rowKd[39] = "Ja";
+
+try
+{
+
+    if (int.Parse(rowKd[43].ToString()) > 0)
+    {
+        rowKd[43] = DateConvert(rowKd[43].ToString());
+    }
+
+    else
+    {
+        rowKd[43] = "@";
+    }
+}
+catch (Exception ex)
+{
+    Logger(ex.Message);
+    rowKd[43] = "@";
+}
+
+if (rowKd[50] != null && rowKd[50].ToString() != "@")
+{
+    if (rowKd[50].ToString() != "0")
+    {
+        rowKd[50] = standort + rowKd[50].ToString();
+    }
+    else
+    {
+        rowKd[50] = "";
+    }
+}
+if (rowKd[53].ToString() != "0")
+{
+
+    if (Dictionaries.VerbandDict.ContainsKey(rowKd[53].ToString()))
+    {
+        rowKd[53] = Dictionaries.VerbandDict[rowKd[53].ToString()];
+    }
+    else
+    {
+        if (Dictionaries.VerbaendeDict.ContainsKey(konto))
+        {
+            rowKd[53] = Dictionaries.VerbaendeDict[konto];
+        }
+        else
+        {
+            rowKd[53] = "@";
+        }
+    }
+}
+else
+{
+    rowKd[53] = string.Empty;
+}
+
+if (rowKd[53].ToString() == "119516" | rowKd[53].ToString() == "138145" | rowKd[53].ToString() == "119433" | rowKd[53].ToString() == "119693")
+{
+    try
+    {
+        rowKd[57] = GetNrVerb(rowKd[12].ToString(), rowKd[13].ToString(), rowKd[53].ToString());
+    }
+    catch (Exception e)
+    {
+        Logger(e.Message);
+
+        rowKd[57] = "";
+    }
+}
+
+if (rowKd[4].ToString() == "DE")
+{
+    try
+    {
+        rowKd[21] = Dictionaries.BundeslandDict[rowKd[14].ToString()];
+        rowKd[18] = CorrectStrasse(rowKd[18].ToString());
+    }
+    catch (Exception e)
+    {
+        Logger(e.Message);
+        rowKd[21] = "";
+    }
+}
+
+try
+{
+    rowKd[35] = GetRegion(rowKd[4].ToString(), rowKd[14].ToString());
+}
+catch (Exception e)
+{
+    Logger(e.Message);
+    rowKd[35] = "@";
+}
+
+if (Dictionaries.sprachenDict.ContainsKey(rowKd[37].ToString()))
+{
+    rowKd[37] = Dictionaries.sprachenDict[rowKd[37].ToString()];
+}
+else
+{
+    rowKd[37] = "@";
+}
+
+if (rowKd[37].ToString() == "D" | rowKd[4].ToString() == "DE" | rowKd[4].ToString() == "CH" | rowKd[4].ToString() == "AT")
+{
+    rowKd[8] = "Sehr geehrte Damen und Herren";
+}
+else if (rowKd[37].ToString() == "F" | rowKd[4].ToString() == "FR")
+{
+    rowKd[8] = "Mesdames, Messieurs";
+}
+else if (rowKd[37].ToString() == "E")
+{
+    rowKd[8] = "Dear Sir / Madam";
+}
+else if (rowKd[37].ToString() == "DU")
+{
+    rowKd[8] = "Geachte dames en heren";
+}
+else
+{
+    rowKd[8] = rowKd[8];
+}
+
+rowKd[47] = RemoveWhiteSpace(rowKd[47].ToString());
+
+if (rowKd[47].ToString() != string.Empty && rowKd[47].ToString().Length > 3)
+{
+    if (!Dictionaries.LandUstidList.Contains(rowKd[47].ToString().Substring(0, 2)))
+    {
+        MatchCollection matches = Regex.Matches(rowKd[47].ToString(), @"\d+");
+        rowKd[45] = matches[0].Value.ToString();
+        rowKd[47] = "";
+    }
+}
+
+
+if (rowKd[4].ToString() == "NL")
+{
+    rowKd[14] = SetPLZ(rowKd[14].ToString(), rowKd[5].ToString());
+    rowKd[5] = SetOrtNL(rowKd[5].ToString());
+}
+
+if (rowKd[32].ToString() == "" | rowKd[32].ToString() == null)
+{
+    rowKd[32] = rowKd[5].ToString().ToUpper(); ;
+}
+
+if (standort == "2" && Dictionaries.ZbdNrHBS2SDL.ContainsKey(rowKd[68].ToString()))
+{
+
+    rowKd[68] = Dictionaries.ZbdNrHBS2SDL[rowKd[68].ToString()];
+}
+else if (Dictionaries.ZbdNrVK.ContainsKey(rowKd[68].ToString()))
+{
+    rowKd[68] = Dictionaries.ZbdNrVK[rowKd[68].ToString()];
+}
+else
+{
+    rowKd[68] = "@";
+}
+
+if (rowKd[93].ToString() != "0")
+{
+    rowKd[93] = "Ja";
+}
+else
+{
+    rowKd[93] = "Nein";
+}
+
+if (rowKd[49].ToString() == "0")
+{
+    rowKd[49] = "Nein";
+}
+else
+{
+    rowKd[49] = "Ja";
+}
+
+if (rowKd[70].ToString() == "N")
+{
+    rowKd[70] = "Ja";
+}
+else if (rowKd[70].ToString() == "J")
+{
+    rowKd[70] = "Nein";
+}
+
+if (rowKd[76] != null)
+{
+    rowKd[76] = Dictionaries.VADict[rowKd[76].ToString()];
+}
+
+
+if (rowKd[84] != null)
+{
+    try
+    {
+        rowKd[84] = GetPreisliste(rowKd[84].ToString());
+    }
+
+    catch (KeyNotFoundException knfe)
+    {
+        rowKd[84] = "@";
+    }
+}
+
+if (rowKd[85] != null)
+{
+    try
+    {
+        rowKd[85] = GetKundenrabattgruppe(rowKd[85].ToString());
+    }
+    catch (KeyNotFoundException knfe)
+    {
+        rowKd[85] = "@";
+    }
+}
+
+rowKd[86] = "Ja";
+                    }
+                    catch (Exception e)
+{
+    Logger(e.Message);
+}
+                }
+            }
+            else
+            {
+                
+            string selectCommand = "SELECT " +
+                "kunden.kdn_kontonr," +
+                "'', " +
+                "anschrift.name_001, " +
+                "anschrift.land, " +
+                "anschrift.ort, " +
+                "anschrift.anssuch, " +
+                "anschrift.ans_suwo2, " +
+                "'@', " +
+                "'@'," +
+                "'@', " +                              //09
+                "'@', " +
+                "anschrift.name_002," +                //11
+                "anschrift.name_003, " +
+                "anschrift.plz," +
+                " '@' AS Expr3, " +
+                "anschrift.ans_teilort, " +
+                "'@' AS Expr4, " +
+                "anschrift.strasse, " +
+                "'@' AS Expr5, " +
+                "'Hausnummer' AS Hausnummer," +
+                "'@' AS Bundesland, " +
+                "anschrift.ans_pf_plz, " +
+                "anschrift.ans_postfach, " +
+                "'Ja' AS Expr8, " +
+                "anschrift.ans_email, " +
+                "anschrift.ans_homepage, " +
+                "anschrift.ans_telex, " +
+                "anschrift.ans_telefon, " +
+                "'' as 'Autotelefon'," +             //28
+                "anschrift.ans_telefax, " +
+                "'' as 'Telefon2'," +
+                "'' as 'Telefax2'," +
+                "'' as 'Längengrad'," +
+                "'' as 'Breitengrad'," +
+                "anschrift.anssuch AS Expr10, " +
+                "anschrift.ans_suwo2 AS Expr11, " +
+                "'@' AS 'Verteileruppe'," +
+                "kunden.kdn_x_branche, " +
+                "'@' AS 'Region'," +               //38
+                "'@', " +
+                "kdn_sprnr, " +                   //40
+                "'' as 'ABC-Klasse'," +
+                "'@' AS 'Teilestatistik', " +
+                "'@' AS 'Webshop', " +
+                "'@' AS 'Bestandsfaktor', " +
+                "'@' AS 'Lagerort', " +
+                "kunden.kdn_erstellt, " +
+                "persktn.pkt_kdn_lief_nr ," +
+                "'', " +          //48
+                "'0'," +
+                "anschrift.ans_ustid, " +         //50
+                "'@' AS 'Rechnungsintervall', " +
+                "kunden.kdn_faktkz, " +
+                "persktn.pkt_rgzahler, " +                      //53
+                "'@' AS  'Konzern', " +
+                "'@' AS 'Bezeichnung', " +
+                "kunden.kdn_ekvnr, " +                          //56          
+                "(select f1e_x_ekname from f1ekverband where f1ekverband.f1e_x_eknr = kunden.kdn_ekvnr limit 1) AS f1ekname, " +
+                "'@' AS Expr24, " +                             //55
+                "'@' AS Expr25, " +
+                "'@' AS Expr26, " +
+                "'@' AS Expr27, " +
+                "'@' AS Expr28, " +
+                "'1', " +                                       //63
+                "'2', " +
+                "'3', " +
+                "'4', " +
+                "'5', " +
+                "'6', " +
+                "'3' as 'Zahlungsart', " +                      //69
+                "'@' AS Expr36, " +
+                "kdn_zbnr, " +                                  //71    
+                "kunden.kdn_kredlimit, " +                      //72
+                "kdn_c_ohneklm, " +                             //73
+                "'2' AS 'Mahnverfahren', " +                    //74
+                "'@' AS Expr39, " +                             //75
+                "'@' AS Expr40, " +                             //76
+                "'@' AS Expr41, " +                             //77
+                "kunden.kdn_vsanr, " +                          //78
+                "kdn_lbdnr," +                                        //79
+                "'@' as 'Lieferrestriktion',  " +               //80    
+                "'' as 'Vertrags'," +                                          //81
+                "kunden.kdn_kredvers, " +                       //82
+                "'@' AS 'KredLimit WKV', " +
+                "'@' AS 'WKV-Kennzeichen', " +
+                "'@' as 'l. Auskunft', " +
+                "kunden.kdn_x_adrsel, " +                       //86
+                "kdn_x_adrsel||'_'||anschrift.land||'_'||kdn_vertrnr_001, " +//87
+                "kdn_x_rabattausw, " +                         //88
+                "'Ja' AS Expr50, " +                           //89
+                "'Ja' AS Expr51, " +                           //90
+                "'@' AS Expr52, " +                            //91 
+                "'0'as 'Sammellieferschein', " +               //92 
+                "kdn_x_ust_wann," +                            //93
+                "'' as 'Bankverbindung'," +
+                "'Ja' as 'Default'," +
+                "'@' ," +
+                "'1' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "kdn_rekopie," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' as 'Versandkalender'," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@', " +
+                "'@' " +           //145
+                "FROM kunden, anschrift,persktn " +
+                "WHERE (persktn.pkt_ansnr = anschrift.ansnr) " +
+                "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +
+                //"and kdn_typ = 'D' " +
+                "and kdn_aenderung > 20240401";
+        
+            OdbcCommand adapterKunde = new OdbcCommand(selectCommand, connection);
+            List<DataTable> dataTables = new List<DataTable>();
+            dataTable = new DataTable("s_Kunde9");
+            dataTable = WriteTable(adapterKunde, dataTable);
+        
+            foreach (DataRow rowKd in dataTable.Rows)
+            {
+                string konto = rowKd[0].ToString();
+        
+                try
+                {
+                    if (Atradius.Rows.Contains(rowKd[0].ToString()))
+                    {
+                        foreach (DataRow row in Atradius.Rows)
+        
+                        {
+                            if (row[0].ToString() == rowKd[0].ToString())
+                            {
+                                rowKd[81] = "216426";
+                                rowKd[82] = row[1];
+                                rowKd[83] = row[4].ToString();
+                                rowKd[84] = "B";
+                                rowKd[85] = row[5];
+                            }
+                        }
+                    }
+        
+                    else
+                    {
+                        rowKd[81] = "@";
+                        rowKd[82] = "@";
+                        rowKd[83] = "@";
+                        rowKd[84] = "@";
+                        rowKd[85] = "@";
+                    }
+        
+                    if (kobensen.Rows.Contains(rowKd[0].ToString()))
+                    {
+                        foreach (DataRow row in kobensen.Rows)
+                        {
+                            if (row[0].ToString() == rowKd[0].ToString())
+                            {
+                                rowKd[50] = RemoveWhiteSpace(row[2].ToString());
+                            }
+                        }
+                    }
+        
+                    ListRgZahler.Add(rowKd[53].ToString());
+                    ListKdNummern.Add(rowKd[0].ToString());
+                    rowKd[0] = standort + rowKd[0].ToString();
+        
+                    rowKd[37] = SetBrancheNr(rowKd[37].ToString());
+        
+        
+                    if (rowKd[3].ToString() == "NL")
+                    {
+                        rowKd[13] = SetPLZ(rowKd[13].ToString(), rowKd[4].ToString());
+                        rowKd[4] = SetOrtNL(rowKd[4].ToString());
+                    }
+                    rowKd[6] = rowKd[4].ToString().ToUpper();
+                    if (rowKd[17] != null)
+                    {
+                        if (rowKd[3].ToString() != "FR")
+                        {
+                            try
+                            {
+                                GetHnr(rowKd[17].ToString());
+        
+                                rowKd[17] = street;
+                                rowKd[19] = hNr;
+                            }
+                            catch (Exception e)
+                            {
+                                Logger(e.Message);
+                            }
+                        }
+                        else
+                        {
+                            rowKd[19] = "@";
+                        }
+                    }
+        
+                    rowKd[17] = CorrectStrasse(rowKd[17].ToString());
+        
+                    if (int.Parse(rowKd[46].ToString()) > 0)
+                    {
+                        rowKd[46] = DateConvert(rowKd[46].ToString());
+                    }
+                    else
+                    {
+                        rowKd[46] = "@";
+                    }
+                }
+        
+                catch (Exception ex)
+                {
+                    Logger(ex.Message);
+        
+                    rowKd[46] = "";
+                }
+        
+                if (rowKd[53] != null && rowKd[53].ToString() != "@")
+                {
+                    if (rowKd[53].ToString() != "0")
+                    {
+                        rowKd[53] = standort + rowKd[53].ToString();
+                    }
+        
+                    else
+                    {
+                        rowKd[53] = "";
+                    }
+                }
+        
+                if (rowKd[56].ToString() != "0")
+                {
+        
+                    if (Dictionaries.VerbandDict.ContainsKey(rowKd[56].ToString()))
+                    {
+                        rowKd[56] = Dictionaries.VerbandDict[rowKd[56].ToString()];
+                    }
+                    else
+                    {
+                        if (Dictionaries.VerbaendeDict.ContainsKey(konto))
+                        {
+                            rowKd[56] = Dictionaries.VerbaendeDict[konto];
+                        }
+                        else
+                        {
+                            rowKd[56] = "@";
+                        }
+                    }
+                }
+                else
+                {
+                    rowKd[56] = string.Empty;
+                }
+        
+        
+                if (rowKd[56].ToString() == "119516" | rowKd[56].ToString() == "138145" | rowKd[56].ToString() == "119433" | rowKd[56].ToString() == "119693")
+                {
+                    rowKd[60] = GetNrVerb(rowKd[11].ToString(), rowKd[12].ToString(), rowKd[56].ToString());
+                }
+        
+                if (rowKd[3].ToString().ToUpper() == "DE")
+                {
+                    try
+                    {
+                        rowKd[20] = Dictionaries.BundeslandDict[rowKd[13].ToString()];
+                        rowKd[17] = CorrectStrasse(rowKd[17].ToString());
+                    }
+        
+                    catch (KeyNotFoundException knfe)
+                    {
+                        rowKd[20] = "";
+                    }
+                }
+        
+                else
+                {
+                    rowKd[20] = "";
+                }
+        
+                rowKd[38] = GetRegion(rowKd[3].ToString(), rowKd[13].ToString());
+        
+                if (Dictionaries.sprachenDict.ContainsKey(rowKd[40].ToString()))
+                {
+                    rowKd[40] = Dictionaries.sprachenDict[rowKd[40].ToString()];
+                }
+        
+                else
+                {
+                    rowKd[40] = "";
+                }
+        
+                if (rowKd[40].ToString() == "D" | rowKd[3].ToString() == "DE" | rowKd[3].ToString() == "CH" | rowKd[3].ToString() == "AT")
+                {
+                    rowKd[7] = "Sehr geehrte Damen und Herren";
+                }
+                else if (rowKd[40].ToString() == "F" | rowKd[3].ToString() == "FR")
+                {
+                    rowKd[7] = "Mesdames, Messieurs";
+                    rowKd[40] = "E";
+                }
+                else if (rowKd[40].ToString() == "E")
+                {
+                    rowKd[7] = "Dear Sir / Madam";
+                }
+                else if (rowKd[40].ToString() == "DU")
+                {
+                    rowKd[7] = "Geachte dames en heren";
+                    rowKd[40] = "E";
+                }
+                else
+                {
+                    rowKd[7] = rowKd[7];
+                }
+        
+                if (rowKd[40].ToString() != "D")
+                {
+                    rowKd[40] = "E";
+                }
+        
+                rowKd[50] = RemoveWhiteSpace(rowKd[50].ToString());
+        
+                if (rowKd[50].ToString() != string.Empty && rowKd[50].ToString().Length > 3)
+                {
+                    if (!Dictionaries.LandUstidList.Contains(rowKd[50].ToString().Substring(0, 2)) && rowKd[50].ToString().Length < 21)
+                    {
+                            rowKd[50] = string.Empty;   
+                    }
+                }
+        
+                if (rowKd[50].ToString().Length > 20)
+                {
+                    rowKd[50] = "";
+                }
+        
+                if (rowKd[35].ToString() == "" | rowKd[35].ToString() == null)
+                {
+                    rowKd[35] = rowKd[4].ToString().ToUpper(); ;
+                }
+        
+                if (standort == "2" && Dictionaries.ZbdNrHBS2SDL.ContainsKey(rowKd[71].ToString()))
+                {
+        
+                    rowKd[71] = Dictionaries.ZbdNrHBS2SDL[rowKd[71].ToString()];
+                }
+                else if (Dictionaries.ZbdNrVK.ContainsKey(rowKd[71].ToString()))
+                {
+                    rowKd[71] = Dictionaries.ZbdNrVK[rowKd[71].ToString()];
+                }
+                else
+                {
+                    rowKd[71] = "";
+                }
+        
+                if (rowKd[93].ToString() != "0")
+                {
+                    rowKd[93] = "Ja";
+                }
+        
+                else
+                {
+                    rowKd[93] = "Nein";
+                }
+        
+                if (rowKd[52].ToString() == "0")
+                {
+                    rowKd[52] = "Nein";
+                }
+        
+                else
+                {
+                    rowKd[52] = "Ja";
+                }
+                if (rowKd[73].ToString() == "N")
+                {
+                    rowKd[73] = "Ja";
+                }
+        
+                else if (rowKd[73].ToString() == "J")
+                {
+                    rowKd[73] = "Nein";
+                }
+                if (rowKd[78] != null && Dictionaries.VADict.ContainsKey(rowKd[78].ToString()))
+                {
+                    rowKd[78] = Dictionaries.VADict[rowKd[78].ToString()];
+                }
+        
+                else
+                {
+                    rowKd[78] = "@";
+                }
+        
+                if (rowKd[86] != null)
+                {
+                    try
+                    {
+                        rowKd[86] = GetPreisliste(rowKd[84].ToString());
+                    }
+        
+                    catch (KeyNotFoundException knfe)
+                    {
+                        rowKd[86] = "@";
+                    }
+        
+                    rowKd[86] = "";
+                }
+        
+                if (rowKd[87] != null)
+                {
+                    try
+                    {
+                        rowKd[87] = string.Empty;
+                    }
+        
+                    catch (KeyNotFoundException knfe)
+                    {
+                        rowKd[88] = "";
+                    }
+                }
+                rowKd[88] = string.Empty;
+                rowKd[89] = "Ja";
+                rowKd[91] = "@";
+        
+                if (Betriebskalender.ContainsKey(rowKd[20].ToString()))
+                {
+                    rowKd[144] = Betriebskalender[rowKd[20].ToString()];
+                }
+            }
+        }
+
+            dataTable.TableName = "KundenFibu";
+            return dataTable;
+        }
+        */
+    }
+
+}
+
+
     
 
 

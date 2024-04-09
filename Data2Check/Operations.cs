@@ -14,7 +14,7 @@ namespace Data2Check
 {
     public class Operations
     {
-
+        DataTable kobensen = new DataTable();
         public Operations()
         {
 
@@ -184,7 +184,19 @@ namespace Data2Check
             {"9"}
         };
 
-        
+        // Logger zum Aufzeichnen von Ereignissen
+        public static void Logger(string error)
+        {
+            using (FileStream fs = new FileStream(@"C:\tmp\data2checkErrorlog.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite))
+            using (StreamReader reader = new StreamReader(fs))
+            using (StreamWriter writer = new StreamWriter(fs))
+            {
+                writer.BaseStream.Position = reader.BaseStream.Length;
+                writer.WriteLine("[" + DateTime.Now + "] : ");
+                writer.WriteLine(error + "\n");
+            }
+        }
+
         // Datumsstring
         public string GetLastDate()
         {
@@ -698,6 +710,78 @@ namespace Data2Check
                     }
                 }
                 Atradius.PrimaryKey = new DataColumn[] { Atradius.Columns[field[0]] };
+            }
+        }
+
+        public void FillUstidKobensen()
+        {
+            int count = 0;
+
+            string KobensenFile = @"C:\Users\TanPat\source\repos\tanYmann\ODBCconnect\Kobensen_Anhang_B_I.csv";
+
+            FileStream streamIn = new FileStream(KobensenFile, FileMode.Open, FileAccess.Read);
+
+            StreamReader sr = new StreamReader(streamIn);
+
+            string[] field = new string[9];
+
+            while (!sr.EndOfStream)
+            {
+                string line = sr.ReadLine();
+
+                try
+                {
+                    field[0] = line.Split(';')[0];
+                    field[1] = line.Split(';')[1];
+                    field[2] = line.Split(';')[2];
+                    field[3] = line.Split(';')[3];
+                    field[4] = line.Split(';')[4];
+                    field[5] = line.Split(';')[5];
+                    field[6] = line.Split(';')[6];
+                    field[7] = line.Split(';')[7];
+                    field[8] = line.Split(';')[8];
+                }
+                catch (Exception e)
+                {
+                    Logger(e.Message + field[0].ToString());
+
+                }
+
+                if (count == 0)
+                {
+                    foreach (string entry in field)
+                    {
+                        kobensen.Columns.Add(entry, typeof(string));
+                    }
+
+                    kobensen.PrimaryKey = new DataColumn[] { kobensen.Columns[field[0]] };
+
+                    count++;
+
+                }
+                else
+                {
+                    DataRow row = kobensen.NewRow();
+
+                    try
+                    {
+                        int countF = 0;
+
+                        foreach (string entry in field)
+                        {
+                            row.SetField(countF, entry);
+
+                            countF++;
+                        }
+
+                        kobensen.Rows.Add(row);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger(ex.Message);
+                    }
+                }
+
             }
         }
     }
