@@ -14,6 +14,10 @@ namespace Data2Check
 {
     public class Operations
     {
+        public string Street { get; set; }
+        public string HNr { get; set; }
+        public string Date { get; set; }
+
         DataTable kobensen = new DataTable();
         public Operations()
         {
@@ -23,8 +27,8 @@ namespace Data2Check
         //Tabelle schreiben
         public DataTable WriteTable(OdbcCommand command, DataTable table)
         {
-
-            DataTable dataTable = table.Copy();
+            DataTable dataTable = new DataTable(table.TableName);
+           
             string cmd = command.CommandText;
             DataSet dataSet = new DataSet();
             Type type = typeof(string);
@@ -32,6 +36,8 @@ namespace Data2Check
             DataTable columntable = Tables.s_Kunde.Clone();
             command.CommandText = cmd;
             command.CommandTimeout = 30;
+            
+            foreach(DataColumn col in columntable.Rows) { col.ReadOnly=false;col.DataType = typeof(string); }
 
             if (command.Connection.State != ConnectionState.Open)
             {
@@ -49,52 +55,21 @@ namespace Data2Check
             }
 
             command.Connection.Close();
-            DataTable clone = table.Clone();
-            int i = 0;
 
-            foreach (DataColumn col in clone.Columns)
+            foreach(DataRow row in dataTable.Rows)
             {
-                col.ReadOnly = false;
-                col.DataType = typeof(string);
-            }
-            foreach (DataRow row in table.Rows)
-            {
-                try
-                {
-                    clone.ImportRow(row);
-                }
-                catch (Exception ex)
-                {
-         
-                }
-            }
-            if (columntable != null)
-            {
-                foreach (DataColumn col in clone.Columns)
-                {
-
-                    try
-                    {
-                        col.ColumnName = columntable.Columns[i].ColumnName.ToString();
-                    }
-                    catch (Exception e)
-                    {
-         
-                    }
-
-                    i++;
-                }
+                columntable.ImportRow(row);
             }
 
-            return clone;
+            return columntable;
         }
 
         //Kobensenliste füllen
-        public void FillUstidKobensen(DataTable kobensen)
+        public DataTable Kobensen(DataTable kobensen)
         {
             int count = 0;
 
-            string KobensenFile = @"C:\Users\TanPat\source\repos\tanYmann\ODBCconnect\Kobensen_Anhang_B_I.csv";
+            string KobensenFile = @"C:\Users\Admin.TanPat\Source\Repos\tanYmann\Data2Check\Data2Check\Kobensen_Anhang_B_I.csv";
 
             FileStream streamIn = new FileStream(KobensenFile, FileMode.Open, FileAccess.Read);
 
@@ -160,15 +135,11 @@ namespace Data2Check
                 }
 
             }
+            return kobensen;
         }
 
         //Pfad Datei letztes Exportdatum
         public FileInfo FileInfoDate = new FileInfo(Directory.GetCurrentDirectory().ToString() + "\\LastDate.txt");
-
-
-        public string Street { get; set; }
-        public string HNr { get; set; }
-        public string Date { get; set; }
 
         //Zahlen in Liste 0-9
         public static List<string> ListZahlen = new List<string>()
@@ -185,7 +156,7 @@ namespace Data2Check
         };
 
         // Logger zum Aufzeichnen von Ereignissen
-        public static void Logger(string error)
+        public void Logger(string error)
         {
             using (FileStream fs = new FileStream(@"C:\tmp\data2checkErrorlog.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite))
             using (StreamReader reader = new StreamReader(fs))
@@ -322,7 +293,7 @@ namespace Data2Check
         }
 
         // Trennung von Straße und Hausnummer
-        public static (string street, string houseNumber) GetHnr(string address)
+        public (string street, string houseNumber) GetHnr(string address)
         {
             address = Regex.Replace(address, @"\b([0-9]+)\s*([A-Za-z])\b", "$1");
             var regex = new Regex(@"(?<strasse>.*[^\d\s])\s*(?<hausnummer>\d+(?:[-\s]\d+)?[A-Za-z]?)$");
@@ -342,7 +313,7 @@ namespace Data2Check
         
 
         // -----------------------------------------------Setzen der Branchennummer mit drei Ziffern (führende 0)
-        public static string SetBrancheNr(string branchennr)
+        public string SetBrancheNr(string branchennr)
         {
             int nummer = 0;
 
@@ -663,7 +634,7 @@ namespace Data2Check
         {
             int count = 0;
             Atradius = new DataTable();
-            string AtradiusFile = @"C:\Users\TanPat\source\repos\tanYmann\ODBCconnect\Atradius.csv";
+            string AtradiusFile = @"C:\Users\Admin.TanPat\Source\Repos\tanYmann\Data2Check\Data2Check\Atradius.csv";
             FileStream streamIn = new FileStream(AtradiusFile, FileMode.Open, FileAccess.Read);
             StreamReader sr = new StreamReader(streamIn);
             string[] field = new string[7];
@@ -717,7 +688,7 @@ namespace Data2Check
         {
             int count = 0;
 
-            string KobensenFile = @"C:\Users\TanPat\source\repos\tanYmann\ODBCconnect\Kobensen_Anhang_B_I.csv";
+            string KobensenFile = @"C:\Users\Admin.TanPat\Source\Repos\tanYmann\Data2Check\Data2Check\Kobensen_Anhang_B_I.csv";
 
             FileStream streamIn = new FileStream(KobensenFile, FileMode.Open, FileAccess.Read);
 
@@ -784,6 +755,26 @@ namespace Data2Check
 
             }
         }
+
+        // Setzen PLZ Niederlande
+        public string SetPLZ(string plz, string ort)
+        {
+            string ending = ort.Substring(0, 2);
+            plz = plz + " " + ending;
+
+            return plz;
+        }
+
+        //Setzen Ort Niederlande
+        public string SetOrtNL(string ort)
+        {
+            ort = ort.Substring(3);
+            return ort;
+        }
+
+            
+       
+
     }
 }
 

@@ -15,9 +15,9 @@
         <Border Grid.Row="0" Background="LightGray" Height="45" VerticalAlignment="Top">
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Height="368">
-                    <StackPanel Orientation="Vertical" Margin="0,0,0,88">
+                    <StackPanel Orientation="Vertical">
                         <Frame x:Name="Frame" Background="Transparent" Height="Auto" Width="Auto"></Frame>
-                        <TextBlock x:Name="TextBoxHeader" Foreground="White" Width="1410" Height="45"  >
+                        <TextBlock x:Name="TextBoxHeader" Foreground="White" Width="Auto" Height="45"  >
                             <TextBlock.Background>
                                 <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
                                     <GradientStop Color="Black" Offset="0"/>
