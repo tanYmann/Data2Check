@@ -929,15 +929,16 @@ namespace Data2Checker
         //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
         private void InitializeTimer()
         {
-            timer = new System.Timers.Timer
+            TimeSpan span = new TimeSpan(1000);
+            timer = new DispatcherTimer()
             {
-                Interval = 1000, // Timer-Intervall in Millisekunden (hier 1 Sekunde)
-                AutoReset = true
+                Interval = span // Timer-Intervall in Millisekunden (hier 1 Sekunde)
+                
 
             };
 
             Endtime = DateTime.Now.AddMinutes(60);
-            timer.Elapsed += TimerElapsed;
+            
             timer.Start();
         }
 

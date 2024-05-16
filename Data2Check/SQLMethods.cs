@@ -308,8 +308,8 @@ namespace Data2Checker
                     "and kdn_kontonr not like ('82013') " +
                     "and kdn_info_001 not like ('gelöscht') " +
                     //"and kdn_info_001 not like ('gesperrt') " +
-                    "and ans_aenderung > {0} " +
-                    "and ans_aenderung < {1} " +
+                    "and ans_aenderung >  "+DateTime.Now.AddDays(-2).ToString()+" "+
+                    //"and ans_aenderung < {1} " +
                     "group by kdn_kontonr" },
 
             { "Kunden_ASCII",
