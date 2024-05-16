@@ -15,16 +15,16 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Microsoft.Win32;
 
-namespace Data2Check
+namespace Data2Checker
 {
     public partial class MainWindow : Window
     {
 
         //Variablen
         SQLMethods methods = new SQLMethods();
-        private System.Timers.Timer timer = new System.Timers.Timer();
         static DataTable Atradius = new DataTable();
         static OdbcConnection OdbcSDL = new OdbcConnection("DSN=Parity_SDL;Pooling=true;");
         static OdbcConnection OdbcHBS = new OdbcConnection("DSN=Parity_HBS;Pooling=true;");
@@ -34,7 +34,7 @@ namespace Data2Check
         static string ASCIIPath = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\transASCIIact\test\";
         static string DateFile = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\KundenLieferanten\LastDate.txt";
         static CancellationTokenSource cancellation = new CancellationTokenSource();
-        const string RegistryKeyString = "Data2Check";
+        const string RegistryKeyString = "Data2Checker";
         NotifyIcon notifyIcon;
         static int testCounter = 0;
         TimeSpan target = new TimeSpan(2, 30, 0);
@@ -47,6 +47,9 @@ namespace Data2Check
         static string LogFile = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\Logger.txt";
         //static bool timerInitialized = false;
         Window1 Window1 = new Window1();
+        private DispatcherTimer timer;
+        private TimeSpan TimeSpan;
+
         //asynchrone Mainmethode
         public async Task MainAsync()
         {
@@ -57,15 +60,76 @@ namespace Data2Check
 
             await ExportData();
         }
-
-        // MainWindoiw
+      
         public MainWindow()
         {
             InitializeComponent();
+
+            // Start the timer
+            CountdownTimer(TimeSpan);
             InitializeNotifyIcon();
             SetRegistryKey();
             _ = Task.Run(async () => await ExportData());
         }
+
+        private void StartTimer()
+        {
+            // Create a new timer
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(1); // Set the interval to 24 hours
+            timer.Tick += Timer_Tick;
+
+            // Calculate the time until 7:00 AM
+            DateTime now = DateTime.Now;
+            DateTime nextExecutionTime = new DateTime(now.Year, now.Month, now.Day + 1, 7, 0, 0);
+            if (nextExecutionTime < now)
+            {
+                nextExecutionTime = nextExecutionTime.AddDays(1);
+            }
+            TimeSpan timeUntilNextExecution = nextExecutionTime - now;
+
+            // Start the countdown timer
+            CountdownTimer(timeUntilNextExecution);
+
+            // Start the main timer
+            timer.Start();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            // Stop the main timer
+            timer.Stop();
+
+            // Execute the task
+            Task.Run(async () => await ExportData());
+
+            // Start the timer again
+            StartTimer();
+        }
+
+        private void CountdownTimer(TimeSpan timeUntilNextExecution)
+        {
+            // Create a new timer for the countdown
+            DispatcherTimer countdownTimer = new DispatcherTimer();
+            countdownTimer.Interval = TimeSpan.FromSeconds(1);
+            countdownTimer.Tick += (sender, e) =>
+            {
+                // Update the countdown label
+                TimeSpan remainingTime = timeUntilNextExecution - DateTime.Now.TimeOfDay;
+                txtRemainingTime.Text = $"Zeit bis zum nächsten Export: {remainingTime.Hours}h {remainingTime.Minutes}m {remainingTime.Seconds}s";
+
+                // Stop the countdown timer when the time reaches 0
+                if (remainingTime <= TimeSpan.Zero)
+                {
+                    countdownTimer.Stop();
+                }
+            };
+
+            // Start the countdown timer
+            countdownTimer.Start();
+        }
+
+     
 
         //Schreiben in den Logfile
         void WriteLogFile(string line)
@@ -92,7 +156,7 @@ namespace Data2Check
         {
             RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 
-            if (key.GetValue("Data2Check") == null)
+            if (key.GetValue("Data2Checker") == null)
             {
                 key.SetValue(key.Name, System.Reflection.Assembly.GetExecutingAssembly().Location);
             }
@@ -299,7 +363,7 @@ namespace Data2Check
                             if (key.Key.ToString() == "DU_Kunde")
                             {/*
                                 string konto = string.Empty;
-                                string query = string.Format(key.Value, GetLastDate().Date2Use);
+                                string query = string.Format(key.Value, GetLastDate().Date2Use,GetLastDate().DateToWrite);
                                 Operations operations = new Operations();
                                 DataTable kobensen = new DataTable();
                                 operations.FillUstidKobensen(kobensen);
@@ -595,7 +659,7 @@ namespace Data2Check
                             }
                             else if (key.Key.ToString() == "DU_Lieferant")
                             {
-                                /*
+                                
                                 string query = string.Format(key.Value, GetLastDate().Date2Use);
                                 Operations operations = new Operations();
                                 DataTable kobensen = new DataTable();
@@ -794,9 +858,8 @@ namespace Data2Check
                                                          "Message    : " + ex.Message + "\n");
                                         }
                                     }
-
                                 }
-                                */
+                                
                             }
                             else
                             {
@@ -832,7 +895,6 @@ namespace Data2Check
                         UpdateProgressBar(10);
                         UpdateProgressBar(10);
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -858,16 +920,14 @@ namespace Data2Check
                     {
                         progressbar.Value = 0;
                         progressbar.BringIntoView();
-                        InitializeTimer();
+                 
                     });
                 }
-                             
-                            }
-                                   
-                            }
+            }
+        }
 
-                            //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
-                            private void InitializeTimer()
+        //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
+        private void InitializeTimer()
         {
             timer = new System.Timers.Timer
             {
@@ -876,7 +936,7 @@ namespace Data2Check
 
             };
 
-            Endtime = DateTime.Now.AddSeconds(55);
+            Endtime = DateTime.Now.AddMinutes(60);
             timer.Elapsed += TimerElapsed;
             timer.Start();
         }
@@ -903,7 +963,7 @@ namespace Data2Check
         // Anzeige der verbleibenden Zeit bis zur nächsten Ausführung
         void SetRemainingTime(TimeSpan remainingTime)
         {
-            txtRemainingTime.Text = $"Zeit bis zum nächsten Export: {remainingTime.Hours}h {remainingTime.Minutes}m {remainingTime.Seconds}s";
+          
         }
 
         // Zeitspanne bis zur nächsten Ausführung
@@ -1015,7 +1075,7 @@ namespace Data2Check
             {
                 string startupFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
                 FileInfo appFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                FileInfo shortcutFileInfo = new FileInfo(startupFolderPath + "\\Data2Check.lnk");
+                FileInfo shortcutFileInfo = new FileInfo(startupFolderPath + "\\Data2Checker.lnk");
 
                 if (shortcutFileInfo.Exists)
                 {
@@ -1024,7 +1084,7 @@ namespace Data2Check
 
                 using (StreamWriter writer = new StreamWriter(shortcutFileInfo.FullName))
                 {
-                    writer.WriteLine("[Data2Check]");
+                    writer.WriteLine("[Data2Checker]");
                     writer.WriteLine("URL=file:///" + appFileInfo.FullName.Replace('\\', '/'));
                     writer.WriteLine("IconIndex=0");
                     writer.WriteLine("IconFile=" + appFileInfo.FullName);

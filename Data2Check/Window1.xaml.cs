@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace Data2Check
+namespace Data2Checker
 {
     /// <summary>
     /// Interaktionslogik für Window1.xaml

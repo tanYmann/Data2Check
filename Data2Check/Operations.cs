@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Xml;
 
-namespace Data2Check
+namespace Data2Checker
 {
     public class Operations
     {
@@ -187,7 +187,7 @@ namespace Data2Check
         // Logger zum Aufzeichnen von Ereignissen
         public static void Logger(string error)
         {
-            using (FileStream fs = new FileStream(@"C:\tmp\data2checkErrorlog.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite))
+            using (FileStream fs = new FileStream(@"C:\tmp\Data2CheckerErrorlog.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite))
             using (StreamReader reader = new StreamReader(fs))
             using (StreamWriter writer = new StreamWriter(fs))
             {

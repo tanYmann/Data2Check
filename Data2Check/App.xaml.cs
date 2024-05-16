@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace Data2Check
+namespace Data2Checker
 {
     /// <summary>
     /// Interaktionslogik für "App.xaml"

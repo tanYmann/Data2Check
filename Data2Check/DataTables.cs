@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Data2Check
+namespace Data2Checker
 {
 
     class DataTables

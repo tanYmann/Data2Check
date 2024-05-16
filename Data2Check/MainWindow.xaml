@@ -1,9 +1,9 @@
-﻿<Window x:Class="Data2Check.MainWindow"
+﻿<Window x:Class="Data2Checker.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Data2Check"
+        xmlns:local="clr-namespace:Data2Checker"
         mc:Ignorable="d"
         Title="MainWindow" Height="495" Width="1418">
     <Grid>

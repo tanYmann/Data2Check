@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data;
 
-namespace Data2Check
+namespace Data2Checker
 {
     class DatabaseManager
     {
