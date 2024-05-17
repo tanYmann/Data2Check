@@ -83,10 +83,10 @@ namespace Data2Checker
         }
 
         //SQL-Queries SDL
-        public Dictionary<string, string> QueriesSDL = new Dictionary<string, string>()
+        public static Dictionary<string, string> QueriesSDL = new Dictionary<string, string>()
         {
 
-            {"DU_Kunde", "SELECT " +
+            {"DU_KundeRechnung", $"SELECT " +
                    "kunden.kdn_kontonr," +
                    "'', " +
                    "anschrift.name_001, " +
@@ -236,13 +236,175 @@ namespace Data2Checker
                 "FROM kunden, anschrift,persktn,historie " +
                           "WHERE (persktn.pkt_ansnr = anschrift.ansnr) " +
                           "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +
-                          "and (kunden.kdn_sperrkz = 0) " +
                           "and his_kdnlfdnr = kdn_lfdnr " +
+                          "and (kunden.kdn_sperrkz = 0) " +
                           "and kdn_typ = 'D' " +
-                          "and kdn_aenderung > '{0}'"
+                          $"and his_redat > "+DateTime.Now.AddDays(-2).ToString("yyyyMMdd")+ " " +
+                          $"and his_redat < "+DateTime.Now.AddDays(1).ToString("yyyyMMdd")+ " " +
+                          "Order BY kdn_kontonr "
 
     },
-            {"DU_Lieferant","Select "+
+                  {"DU_KundeAenderung", $"SELECT " +
+                    "kunden.kdn_kontonr," +
+                    "'', " +
+                    "anschrift.name_001, " +
+                    "anschrift.land, " +
+                    "anschrift.ort, " +
+                    "anschrift.anssuch, " +
+                    "anschrift.ans_suwo2, " +
+                    "'@', " +
+                    "'@'," +
+                    "'@', " +                              //09
+                    "'@', " +
+                    "anschrift.name_002," +                //11
+                    "anschrift.name_003, " +
+                    "anschrift.plz," +
+                    " '@' AS Expr3, " +
+                    "anschrift.ans_teilort, " +
+                    "'@' AS Expr4, " +
+                    "anschrift.strasse, " +
+                    "'@' AS Expr5, " +
+                    "'Hausnummer' AS Hausnummer," +
+                    "'@' AS Bundesland, " +
+                    "anschrift.ans_pf_plz, " +
+                    "anschrift.ans_postfach, " +
+                    "'Ja' AS Expr8, " +
+                    "anschrift.ans_email, " +
+                    "anschrift.ans_homepage, " +
+                    "anschrift.ans_telex, " +
+                    "anschrift.ans_telefon, " +
+                    "'' as 'Autotelefon'," +             //28
+                    "anschrift.ans_telefax, " +
+                    "'' as 'Telefon2'," +
+                    "'' as 'Telefax2'," +
+                    "'' as 'Längengrad'," +
+                    "'' as 'Breitengrad'," +
+                    "anschrift.anssuch AS Expr10, " +
+                    "anschrift.ans_suwo2 AS Expr11, " +
+                    "'@' AS 'Verteileruppe'," +
+                    "kunden.kdn_x_branche, " +
+                    "'@' AS 'Region'," +               //38
+                    "'@', " +
+                    "kdn_sprnr, " +                   //40
+                    "'' as 'ABC-Klasse'," +
+                    "'@' AS 'Teilestatistik', " +
+                    "'@' AS 'Webshop', " +
+                    "'@' AS 'Bestandsfaktor', " +
+                    "'@' AS 'Lagerort', " +
+                    "kunden.kdn_erstellt, " +
+                    "persktn.pkt_kdn_lief_nr ," +
+                    "'', " +          //48
+                    "'0'," +
+                    "anschrift.ans_ustid, " +         //50
+                    "'@' AS 'Rechnungsintervall', " +
+                    "kunden.kdn_faktkz, " +
+                    "persktn.pkt_rgzahler, " +                      //53
+                    "'@' AS  'Konzern', " +
+                    "'@' AS 'Bezeichnung', " +
+                    "kunden.kdn_ekvnr, " +                          //56          
+                    "(select f1e_x_ekname from f1ekverband where f1ekverband.f1e_x_eknr = kunden.kdn_ekvnr limit 1) AS f1ekname, " +
+                    "'@' AS Expr24, " +                             //55
+                    "'@' AS Expr25, " +
+                    "'@' AS Expr26, " +
+                    "'@' AS Expr27, " +
+                    "'@' AS Expr28, " +
+                    "'1', " +                                       //63
+                    "'2', " +
+                    "'3', " +
+                    "'4', " +
+                    "'5', " +
+                    "'6', " +
+                    "'3' as 'Zahlungsart', " +                      //69
+                    "'@' AS Expr36, " +
+                    "kdn_zbnr, " +                                  //71    
+                    "kunden.kdn_kredlimit, " +                      //72
+                    "kdn_c_ohneklm, " +                             //73
+                    "'2' AS 'Mahnverfahren', " +                    //74
+                    "'@' AS Expr39, " +                             //75
+                    "'@' AS Expr40, " +                             //76
+                    "'@' AS Expr41, " +                             //77
+                    "kunden.kdn_vsanr, " +                          //78
+                    "kdn_lbdnr," +                                        //79
+                    "'@' as 'Lieferrestriktion',  " +               //80    
+                     "'' as 'Vertrags'," +                                          //81
+                    "'@' AS 'KredLimit WKV', " +
+                    "kunden.kdn_kredvers, " +                       //83
+                    "'@' AS 'WKV-Kennzeichen', " +
+                    "'@' as 'l. Auskunft', " +
+                    "kunden.kdn_x_adrsel, " +                       //86
+                    "kdn_x_adrsel||'_'||anschrift.land||'_'||kdn_vertrnr_001, " +//87
+                    "kdn_x_rabattausw, " +                         //88
+                    "'Ja' AS Expr50, " +                           //89
+                    "'Ja' AS Expr51, " +                           //90
+                    "'@' AS Expr52, " +                            //91 
+                    "'0'as 'Sammellieferschein', " +               //92 
+                    "kdn_x_ust_wann," +                            //93
+                    "'' as 'Bankverbindung'," +
+                    "'Ja' as 'Default'," +
+                    "'@' ," +
+                    "'1' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "kdn_rekopie," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' as 'Versandkalender'," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@' ," +
+                    "'@', " +
+                    "'@' " +           //145
+                    "FROM kunden, anschrift,persktn " +
+                    "WHERE (persktn.pkt_ansnr = anschrift.ansnr) " +
+                    "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +
+                    "and pkt_ktonr = kdn_kontonr " +
+                    "and kdn_typ = 'D' " +
+                    "and ans_aenderung > "+DateTime.Now.AddDays(-2).ToString("yyyyMMdd")+ " " +
+
+                    "group by kdn_kontonr"
+            },
+
+
+
+
+            {"DU_Lieferant",$"Select "+
                     "kdn_kontonr," +
                     "''," +
                     "name_001," +
@@ -280,7 +442,7 @@ namespace Data2Checker
                     "'@'," +
                     "'@'," +
                     "kdn_sprnr," +
-                    "'@'," +
+                    "'@',"+
                     "kdn_kredkontonr," +
                     "ans_stnr," +
         /*40*/      "'0'," +
@@ -308,23 +470,23 @@ namespace Data2Checker
                     "and kdn_kontonr not like ('82013') " +
                     "and kdn_info_001 not like ('gelöscht') " +
                     //"and kdn_info_001 not like ('gesperrt') " +
-                    "and ans_aenderung >  "+DateTime.Now.AddDays(-2).ToString()+" "+
-                    //"and ans_aenderung < {1} " +
-                    "group by kdn_kontonr" },
+                    "and ans_aenderung > "+DateTime.Now.AddDays(-2).ToString("yyyyMMdd")+ " " +
+                    "group by kdn_kontonr"
+                    },
 
-            { "Kunden_ASCII",
-                "Select " +
-                "kdn_kontonr,kdn_zbnr, " +
-                "ans_ustid," +
-                "kdn_ekvnr, " +
-                "(select f1e_x_ekname from f1ekverband where f1e_x_eknr = kdn_ekvnr limit 1) " +
-                "from kunden,anschrift " +
-                "where kdn_lfdnr = ansnr " +
-                "and kdn_typ = 'D' " +
-                "group by kdn_kontonr "},
-
-            {"Lieferanten_ASCII","select " +
+            {"Kunden_ASCII","select " +
                     "kdn_kontonr," +
+                    "kdn_zbnr," +
+                    "ans_ustid," +
+                    "kdn_ekvnr, " +
+                    "(select f1e_x_ekname from f1ekverband where f1e_x_eknr = kdn_ekvnr limit 1)  " +
+                    "from kunden,anschrift " +
+                    "where kdn_lfdnr = ansnr " +
+                    "and kdn_typ = 'D' "
+
+            },
+
+            { "Lieferanten_ASCII" ,  "kdn_kontonr," +
                     "name_001," +
                     "land," +
                     "kdn_zbnr," +
@@ -342,7 +504,7 @@ namespace Data2Checker
                 "kdn_kontonr, " +
                 "his_renr " +
                 "from beleg,kunden,historie " +
-                "where bel_datum > 20221231 " +
+                "where his_redat > 20240101 " +
                 "and kdn_kontonr = bel_kontonr " +
                 "and his_belnr = bel_nr " +
                 "and bel_typ = '1' " +
@@ -350,76 +512,10 @@ namespace Data2Checker
         };
 
         //SQL-Queries HBS
-        public Dictionary<string, string> QueriesHBS = new Dictionary<string, string>()
+        public static Dictionary<string, string> QueriesHBS = new Dictionary<string, string>()
         {
-            {"DU_Kunde","select " +
-                     "kdn_kontonr," +
-                    "''," +
-                    "name_001," +
-                    "land," +
-                    "ort," +
-        /*05*/      "anssuch," +
-                    "ans_suwo2," +
-                    "'@'," +
-                    "'@'," +
-                    "'@'," +
-                    "'@'," +
-                    "name_002," +
-                    "name_003," +
-                    "plz," +
-                    "'@'," +
-                    "'@'," +
-                    "'@'," +
-                    "strasse," +
-                    "'@'," +
-                    "'@'," +
-        /*20*/      "'@'," +
-                    "ans_pf_plz," +
-                    "ans_postfach," +
-                    "'ja'," +
-                    "ans_email," +
-                    "ans_homepage," +
-                    "ans_telex," +
-                    "ans_telefon," +
-                    "ans_telefax," +
-                    "'@'," +
-                    "anssuch," +
-                    "ans_suwo2," +
-                    "''," +
-                    "kdn_x_branche," +
-                    "'@'," +
-                    "'@'," +
-                    "kdn_sprnr," +
-                    "'@'," +
-                    "kdn_kredkontonr," +
-                    "ans_stnr," +
-        /*40*/      "'0'," +
-                    "ans_ustid," +
-                    "'@'," +
-                    "'@'," +
-        /*44*/      "kdn_zbnr," +
-                    "kdn_kredlimit," +
-                    "'1'," +
-                    "'2'," +
-                    "'3'," +
-                    "'4'," +
-                    "'5'," +
-                    "'6'," +
-        /*52*/      "kdn_lbdnr," +
-                    "kdn_vsanr," +
-                    "kdn_c_minbst," +
-                    "'@'," +
-                    "kdn_abkopie," +
-                    "'@'," +
-                    "kdn_x_ust_wann " +
-                    "from anschrift,kunden " +
-                    "where ansnr = kdn_lfdnr " +
-                    "and ans_typ = 'K' " +
-                    "and kdn_info_001 not like ('gelöscht') " +
-                    "and kdn_info_001 not like ('gesperrt') " +
-                    "and kdn_aenderung > '{0}'"},
 
-            {"DU_Lieferant","SELECT " +
+            {"DU_Lieferant",$"SELECT " +
                        "kunden.kdn_kontonr," +                         //0
                        "'@' as Profitcenter, " +
                        "'', " +
@@ -519,7 +615,8 @@ namespace Data2Checker
                        "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +
                        "and (kunden.kdn_sperrkz = 0) " +
                        "and ans_typ = 'D' " +
-                       "and ans_aenderung > '{0}'"},
+                       "and kdn_aenderung >"+DateTime.Now.AddDays(-2).ToString("yyyyMMdd")+ " " +
+                       "group by kdn_kontonr"},
 
             {"Lieferanten_ASCII","select " +
                     "kdn_kontonr," +
@@ -532,23 +629,10 @@ namespace Data2Checker
                     "and kdn_typ = 'K' " +
                     "and kdn_kontonr not like '99999' " +
                     "group by kdn_kontonr " +
-                ""},
-
-            {"Kunden_ASCII","select " +
-                   "kdn_kontonr," +
-                   "kdn_zbnr," +
-                   "ans_ustid," +
-                   "kdn_ekvnr, " +
-                   "(select f1e_x_ekname from f1ekverband where f1e_x_eknr = kdn_ekvnr limit 1) " +
-                   "from kunden,anschrift " +
-                   "where kdn_lfdnr = ansnr " +
-                   "and kdn_typ = 'D' " +
-                   "group by kdn_kontonr " +
-                   ""
-            }
+                ""}
         };
 
-    
+
         // Kunden für transASCIIact
         public DataTable GetKundenASCII(OdbcConnection connection, string standort)
         {
@@ -602,7 +686,7 @@ namespace Data2Checker
 
         //Methode zur Ausgabe einer .csv Datei, erstellt aus einer DataTable
 
-        public void Table2CSV(DataTable table, string path, string preString)
+        public static void Table2CSV(DataTable table, string path, string preString)
         {
             string filePathtrue = path + preString + table.TableName + ".csv";
             string cols = string.Empty;
