@@ -94,7 +94,7 @@ namespace Data2Checker
         {
             int count = 0;
 
-            string KobensenFile = @"C:\Users\TanPat\source\repos\tanYmann\ODBCconnect\Kobensen_Anhang_B_I.csv";
+            string KobensenFile = @"C:\Users\Admin.TanPat\Source\Repos\tanYmann\Data2Check\Data2Check\Kobensen_Anhang_B_I.csv";
 
             FileStream streamIn = new FileStream(KobensenFile, FileMode.Open, FileAccess.Read);
 
@@ -663,7 +663,7 @@ namespace Data2Checker
         {
             int count = 0;
             Atradius = new DataTable();
-            string AtradiusFile = @"C:\Users\TanPat\source\repos\tanYmann\ODBCconnect\Atradius.csv";
+            string AtradiusFile = @"C:\Users\Admin.TanPat\Source\Repos\tanYmann\Data2Check\Data2Check\Atradius.csv";
             FileStream streamIn = new FileStream(AtradiusFile, FileMode.Open, FileAccess.Read);
             StreamReader sr = new StreamReader(streamIn);
             string[] field = new string[7];
@@ -717,7 +717,7 @@ namespace Data2Checker
         {
             int count = 0;
 
-            string KobensenFile = @"C:\Users\TanPat\source\repos\tanYmann\ODBCconnect\Kobensen_Anhang_B_I.csv";
+            string KobensenFile = @"C:\Users\Admin.TanPat\Source\Repos\tanYmann\Data2Check\Data2Check\Kobensen_Anhang_B_I.csv";
 
             FileStream streamIn = new FileStream(KobensenFile, FileMode.Open, FileAccess.Read);
 
