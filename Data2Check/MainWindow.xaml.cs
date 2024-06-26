@@ -1,16 +1,17 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
-using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net.NetworkInformation;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Forms;
-using Microsoft.Win32;
 
 namespace Data2Check
 {
@@ -18,7 +19,7 @@ namespace Data2Check
     {
         private SQLMethods methods = new SQLMethods();
         private System.Timers.Timer timer = new System.Timers.Timer();
-        private static DataTable Atradius = new DataTable();
+        private static DataTable Atradius = new DataTable("Atradius");
         private static OdbcConnection OdbcSDL = new OdbcConnection("DSN=Parity_SDL;Pooling=true;");
         private static OdbcConnection OdbcHBS = new OdbcConnection("DSN=Parity_HBS;Pooling=true;");
         private static string preString { get; set; }
@@ -37,23 +38,34 @@ namespace Data2Check
         private DateTime Endtime = dateTime;
         private static string LogFile = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\Logger.txt";
         private Window1 Window1 = new Window1();
-
+        DataTable kobensen = new DataTable("Kobensen");
+        ProgressBar progressBar = new ProgressBar();
+        private System.Timers.Timer countdownTimer;
+        private DateTime nextExecutionTime;
+        TimerWindow timerWindow = new TimerWindow();
         public async Task MainAsync()
         {
             while (!CheckNetwork())
             {
-                SetText("Netzwerkverbindung nicht bereit.");
+                SetText("Netzwerkverbindung nicht bereit. Warte 5 Sekunden...");
+                await Task.Delay(5000); // Fügt eine asynchrone Pause von 5 Sekunden hinzu
             }
-
-            await ExportData();
+            SetText("Netzwerkverbindung ist jetzt bereit.");
         }
 
         public MainWindow()
         {
+            operations.FillAtradius(Atradius);
+            operations.FillUstidKobensen(kobensen);
             InitializeComponent();
-            InitializeNotifyIcon();
             SetRegistryKey();
-            _ = Task.Run(async () => await ExportData());
+            SetText("Anwendung gestartet.\n");
+            SetText("Netzwerkverbindung wird geprüft.\n");
+            SetText("VPN-Verbindung wird geprüft.\n");
+            SetText("ODBC-Treiber wird geprüft.\n");
+            SetText("ODBC-Verbindung wird geprüft.\n");
+            SetText("Daten werden exportiert.\n");
+            Task.Run(() => ExecuteQueries(ExportData()));
         }
 
         private void WriteLogFile(string line)
@@ -105,7 +117,7 @@ namespace Data2Check
                 return false;
             }
         }
-        // Prüfen der VPN-Verbindung
+
         void IsJuniperAndConnected()
         {
             bool isConnected = false;
@@ -130,7 +142,23 @@ namespace Data2Check
             }
         }
 
-        // ODBC-Treiber prüfen
+        private void WriteLog(string line)
+        {
+            if (!Directory.Exists(@"c:\tmp\logs"))
+            {
+                Directory.CreateDirectory(@"c:\tmp\logs");
+            }
+
+            if (!File.Exists(@"c:\tmp\logs\D2CLog.txt"))
+            {
+                File.Create(@"c:\tmp\logs\D2CLog.txt");
+            }
+            using (StreamWriter writer = File.AppendText(@"c:\tmp\logs\D2CLog.txt"))
+            {
+                writer.WriteLine($"{DateTime.Now} : {line}");
+            }
+        }
+
         async Task<bool> checkOdbc(OdbcConnection connection)
         {
             if (connection.Driver == null)
@@ -145,856 +173,337 @@ namespace Data2Check
             }
         }
 
-        // Prüfen ob OdbcConnection offen
-        bool CheckUp(OdbcConnection connection)
+        private void SetupCountdownTimer()
         {
-            bool check = false;
-            if (connection != null)
-            {
-                try
-                {
-                    if (connection.State == ConnectionState.Open)
-                    {
-                        connection.Close();
-                    }
+            TimerWindow timerWindow = new TimerWindow();
+            // Setzen Sie nextExecutionTime auf die gewünschte Zeit der nächsten Ausführung
+            nextExecutionTime = DateTime.Now.AddMinutes(3); // Beispiel: Nächste Ausführung in einer Stunde
 
-                    connection.Open();
-                    check = true;
-                    return check;
-                }
-                catch (Exception x)
-                {
-
-                }
-            }
-            else
-            {
-                Thread.Sleep(5000);
-                CheckUp(connection);
-                return check;
-            }
-
-            return check;
+            countdownTimer = new System.Timers.Timer(1000); // Timer aktualisiert jede Sekunde
+            countdownTimer.Elapsed += OnCountdownTimerElapsed;
+            countdownTimer.AutoReset = true;
+            countdownTimer.Enabled = true;
         }
 
-        public void StartTimer()
+        private void OnCountdownTimerElapsed(object sender, ElapsedEventArgs e)
         {
-            // Create a timer with a 60-minute interval
-            timer = new System.Timers.Timer(60 * 60 * 1000);
-            timer.Elapsed += TimerElapsed;
-            timer.AutoReset = true;
-            timer.Enabled = true;
 
-            // Set the initial countdown value
-            target = NextExecution(DateTime.Now);
-            SetRemainingTime(target);
+            // Berechnung der verbleibenden Zeit bis zur nächsten Ausführung
+            TimeSpan remainingTime = nextExecutionTime - DateTime.Now;
 
-            // Start the timer
-            timer.Start();
-        }
-
-        private void TimerElapsed(object sender, ElapsedEventArgs e)
-        {
-            // Update the countdown value
-            target = NextExecution(DateTime.Now);
-            SetRemainingTime(target);
-
-            // Perform the desired action
-            Task.Run(async () => await ExportData());
-
-            // Stop the timer if necessary
-            if (target <= TimeSpan.Zero)
+            // Aktualisieren Sie hier die Benutzeroberfläche mit der verbleibenden Zeit
+            // Da Timer-Callbacks in einem anderen Thread ausgeführt werden, müssen Sie sicherstellen,
+            // dass die Aktualisierung der Benutzeroberfläche im UI-Thread erfolgt.
+            this.Dispatcher.Invoke(() =>
             {
-                timer.Stop();
-            }
-        }
-
-        public TimeSpan NextExecution(DateTime targetTime)
-        {
-            // Calculate the time until the next execution
-            TimeSpan remainingTime = targetTime.TimeOfDay - DateTime.Now.TimeOfDay;
+                // Beispiel: Aktualisieren eines Labels mit der verbleibenden Zeit
+                // Ersetzen Sie "timeLabel" durch den tatsächlichen Namen Ihres Labels
+                timerWindow.timeLabel.Content = $"Verbleibende Zeit: {remainingTime.Hours} Stunden, {remainingTime.Minutes} Minuten, {remainingTime.Seconds} Sekunden";
+            });
+            // Wenn die verbleibende Zeit abgelaufen ist, führen Sie die gewünschte Aktion aus
             if (remainingTime <= TimeSpan.Zero)
             {
-                remainingTime = TimeSpan.FromDays(1) + remainingTime;
-            }
-            return remainingTime;
-        }
+                countdownTimer.Stop();
+                OdbcConnection connection = new OdbcConnection("DSN=Parity_SDL;Pooling=true;");
+                // Führen Sie hier die gewünschte Aktion aus
+                // Beispiel: Starten Sie eine Methode, die die Aufgabe ausführt
+                // Ersetzen Sie "StartTask" durch den Namen der Methode, die die Aufgabe ausführt
 
-        public void SetRemainingTime(TimeSpan remainingTime)
+
+                Task.Run(() => BelegeASCIITable());
+
+                GetDataKunden();
+                GetDataLieferanten();
+
+                // Setzen Sie nextExecutionTime auf die gewünschte Zeit der nächsten Ausführung
+                nextExecutionTime = DateTime.Now.AddHours(1); // Beispiel: Nächste Ausführung in einer Stunde
+                countdownTimer.Start();
+
+            }
+        }
+        private void WriteDataTableToCsv(DataTable dataTable, string fileName)
         {
-            // Update the UI with the remaining time
-            txtRemainingTime.Text = $"Zeit bis zum nächsten Export: {remainingTime.Hours}h {remainingTime.Minutes}m {remainingTime.Seconds}s";
-        }
-       
-        // Der Datenexport
-        async Task ExportData()
-        {
-            Dictionary<string, string> dictSDL = new Dictionary<string, string>();
-            dictSDL = SQLMethods.QueriesSDL;
-            Dictionary<string, string> dictHBS = new Dictionary<string, string>();
-            dictHBS = SQLMethods.QueriesHBS;
-            
-            foreach (string key in dictSDL.Keys)
+            StringBuilder sb = new StringBuilder();
+
+            IEnumerable<string> columnNames = dataTable.Columns.Cast<DataColumn>().Select(column => column.ColumnName);
+            sb.AppendLine(string.Join(";", columnNames));
+
+            foreach (DataRow row in dataTable.Rows)
             {
-                SetText("Key : " + key + " Value : " + dictSDL[key] + "\n");
+                IEnumerable<string> fields = row.ItemArray.Select(field => field.ToString());
+                sb.AppendLine(string.Join(";", fields));
             }
 
-            foreach (string key in dictHBS.Keys)
-            {
-                SetText("Key : " + key + " Value : " + dictHBS[key] + "\n");
-            }
-
-            Tables tables = new Tables();
-            CancellationToken token = cancellation.Token;
-            operations.FillAtradius(Atradius);
-
-            foreach (OdbcConnection conn in Connections)
-            {
-                DataTable dataTable = new DataTable();
-                Standort = int.Parse(methods.GetStandort(conn));
-                await checkOdbc(conn);
-
-                if (token.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                SetPreString(conn.ConnectionString);
-                UpdateProgressBar(10);
-                SetText("Vorbereitung abgeschlossen. \n");
-                Dictionary<string, string> dict = new Dictionary<string, string>();
-
-                try
-                {
-                    if (conn.State != ConnectionState.Open)
-                    {
-                        conn.Open();
-                    }
-
-                    if (conn.ConnectionString.Contains("SDL"))
-                    {
-                        dict = SQLMethods.QueriesSDL;
-                    }
-                    else if (conn.ConnectionString.Contains("HBS"))
-                    {
-                        dict = SQLMethods.QueriesHBS;
-                    }
-
-                    foreach (var key in dict)
-                    {
-                        if (token.IsCancellationRequested)
-                        {
-                            return;
-                        }
-
-                        dataTable = new DataTable(key.Key.ToString());
-                        string query = key.Value.ToString();
-
-                        using (OdbcCommand command = new OdbcCommand(query, conn))
-                        {
-                            if (conn.State != ConnectionState.Open)
-                            {
-                                conn.Open();
-                            }
-
-                            if (key.Key.ToString() == "DU_KundeRechnung" | key.Key.ToString() == "DU_KundeAenderung")
-                            {
-                                string konto = string.Empty;
-                                query = key.Value;
-                                Operations operations = new Operations();
-                                DataTable kobensen = new DataTable();
-                                operations.FillUstidKobensen(kobensen);
-                                command.CommandText = query;
-                                dataTable = operations.WriteTable(command, dataTable);
-
-                                foreach (DataRow rowKd in dataTable.Rows)
-                                {
-                                    konto = rowKd[0].ToString();
-
-                                    try
-                                    {
-                                        if (Atradius.Rows.Contains(rowKd[0].ToString()))
-                                        {
-                                            foreach (DataRow row in Atradius.Rows)
-
-                                            {
-                                                if (row[0].ToString() == rowKd[0].ToString())
-                                                {
-                                                    rowKd[79] = "216426";
-                                                    rowKd[80] = row[1];
-                                                    rowKd[81] = row[4];
-                                                    rowKd[82] = "B";
-                                                    rowKd[83] = row[5];
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            rowKd[79] = "";
-                                            rowKd[80] = "";
-                                            rowKd[81] = "";
-                                            rowKd[82] = "";
-                                            rowKd[83] = "";
-                                        }
-
-                                        if (kobensen.Rows.Contains(rowKd[0].ToString()))
-                                        {
-                                            foreach (DataRow row in kobensen.Rows)
-                                            {
-                                                if (row[0].ToString() == rowKd[0].ToString())
-                                                {
-                                                    rowKd[47] = operations.RemoveWhiteSpace(row[2].ToString());
-                                                }
-                                            }
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        rowKd[43] = "";
-                                        WriteLogFile("Source     : " + ex.Source + "\n" +
-                                                     "TargetSite : " + ex.TargetSite + "\n" +
-                                                     "StackTrace : " + ex.StackTrace + "\n" +
-                                                     "Message    : " + ex.Message + "\n");
-                                    }
-
-                                    string hNr = string.Empty;
-                                    string street = rowKd[18].ToString();
-
-                                    if (Dictionaries.JungheinrichDict.ContainsKey(rowKd[0].ToString()))
-                                    {
-                                        rowKd[0] = Dictionaries.JungheinrichDict[rowKd[0].ToString()];
-                                    }
-                                    else
-                                    {
-                                        rowKd[0] = Standort.ToString() + rowKd[0].ToString();
-                                    }
-
-                                    rowKd[7] = rowKd[5].ToString().ToUpper();
-                                    rowKd[34] = Operations.SetBrancheNr(rowKd[34].ToString());
-                                    rowKd[18] = operations.CorrectStrasse(rowKd[18].ToString());
-
-                                    if (rowKd[18] != null)
-                                    {
-                                        if (rowKd[4].ToString() != "FR")
-                                        {
-                                            try
-                                            {
-                                                (street, hNr) = Operations.GetHnr(rowKd[18].ToString());
-                                                rowKd[18] = street;
-                                                rowKd[20] = hNr;
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                WriteLogFile("Source     : " + ex.Source + "\n" +
-                                                    "TargetSite : " + ex.TargetSite + "\n" +
-                                                    "StackTrace : " + ex.StackTrace + "\n" +
-                                                    "Message    : " + ex.Message + "\n");
-
-                                            }
-                                        }
-                                        else
-                                        {
-
-                                            rowKd[20] = "";
-                                        }
-                                    }
-                                    int out43 = 0;
-
-                                    if (int.TryParse(rowKd[43].ToString(), out out43))
-                                    {
-                                        rowKd[43] = operations.DateConvert(out43.ToString());
-                                    }
-                                    else
-                                    {
-                                        rowKd[43] = "";
-                                    }
-
-                                    rowKd[39] = "Ja";
-
-                                    if (rowKd[50] != null && rowKd[50].ToString() != "@")
-                                    {
-                                        if (rowKd[50].ToString() != "0")
-                                        {
-                                            rowKd[50] = Standort.ToString() + rowKd[50].ToString();
-                                        }
-
-                                        else
-                                        {
-                                            rowKd[50] = "";
-                                        }
-                                    }
-
-
-                                    if (rowKd[53].ToString() == "195160" | rowKd[53].ToString() == "381450" | rowKd[53].ToString() == "194330" | rowKd[53].ToString() == "196930")
-                                    {
-                                        rowKd[57] = operations.GetNrVerb(rowKd[12].ToString(), rowKd[13].ToString(), rowKd[53].ToString());
-                                    }
-
-                                    if (rowKd[4].ToString().ToUpper() == "DE")
-                                    {
-                                        try
-                                        {
-                                            rowKd[21] = Dictionaries.BundeslandDict[rowKd[14].ToString()];
-                                            rowKd[18] = operations.CorrectStrasse(rowKd[18].ToString());
-                                        }
-
-                                        catch (KeyNotFoundException ex)
-                                        {
-                                            rowKd[21] = "";
-                                            WriteLogFile("Source     : " + ex.Source + "\n" +
-                                                    "TargetSite : " + ex.TargetSite + "\n" +
-                                                    "StackTrace : " + ex.StackTrace + "\n" +
-                                                    "Message    : " + ex.Message + "\n");
-                                        }
-                                    }
-
-                                    else
-                                    {
-                                        rowKd[21] = "@";
-                                    }
-
-                                    rowKd[35] = operations.GetRegion(rowKd[4].ToString(), rowKd[14].ToString());
-
-                                    if (Dictionaries.sprachenDict.ContainsKey(rowKd[37].ToString()))
-                                    {
-                                        rowKd[37] = Dictionaries.sprachenDict[rowKd[37].ToString()];
-                                    }
-
-                                    else
-                                    {
-                                        rowKd[37] = "@";
-                                    }
-
-                                    if (rowKd[37].ToString() == "D" | rowKd[4].ToString() == "DE" | rowKd[4].ToString() == "CH" | rowKd[4].ToString() == "AT")
-                                    {
-                                        rowKd[8] = "Sehr geehrte Damen und Herren";
-                                    }
-                                    else if (rowKd[37].ToString() == "F" | rowKd[4].ToString() == "FR")
-                                    {
-                                        rowKd[8] = "Mesdames, Messieurs";
-                                    }
-                                    else if (rowKd[37].ToString() == "E")
-                                    {
-                                        rowKd[8] = "Dear Sir / Madam";
-                                    }
-                                    else if (rowKd[37].ToString() == "DU")
-                                    {
-                                        rowKd[8] = "Geachte dames en heren";
-                                    }
-
-                                    else
-                                    {
-                                        rowKd[8] = rowKd[8];
-                                    }
-
-                                    rowKd[47] = operations.RemoveWhiteSpace(rowKd[47].ToString());
-
-                                    if (rowKd[47].ToString() != string.Empty && rowKd[47].ToString().Length > 3)
-                                    {
-                                        if (!Dictionaries.LandUstidList.Contains(rowKd[47].ToString().Substring(0, 2)))
-                                        {
-                                            rowKd[45] = rowKd[47].ToString();
-                                            rowKd[47] = string.Empty;
-                                        }
-                                    }
-
-                                    if (rowKd[32].ToString() == "" | rowKd[32].ToString() == null)
-                                    {
-                                        rowKd[32] = rowKd[5].ToString().ToUpper(); ;
-                                    }
-
-                                    if (Standort == 2 && Dictionaries.ZbdNrHBS2SDL.ContainsKey(rowKd[68].ToString()))
-                                    {
-
-                                        rowKd[68] = Dictionaries.ZbdNrHBS2SDL[rowKd[68].ToString()];
-                                    }
-                                    else if (Dictionaries.ZbdNrVK.ContainsKey(rowKd[68].ToString()))
-                                    {
-                                        rowKd[68] = Dictionaries.ZbdNrVK[rowKd[68].ToString()];
-                                    }
-                                    else
-                                    {
-                                        rowKd[68] = "@";
-                                    }
-
-                                    if (rowKd[93].ToString() != "0")
-                                    {
-                                        rowKd[93] = "Ja";
-                                    }
-
-                                    else
-                                    {
-                                        rowKd[93] = "Nein";
-                                    }
-
-                                    if (rowKd[49].ToString() == "0")
-                                        rowKd[49] = "Nein";
-
-
-                                    else
-                                    {
-                                        rowKd[49] = "Ja";
-                                    }
-
-                                    if (rowKd[70].ToString() == "N")
-                                    {
-                                        rowKd[70] = "Ja";
-                                    }
-
-                                    else if (rowKd[70].ToString() == "J")
-                                    {
-                                        rowKd[70] = "Nein";
-                                    }
-
-                                    if (rowKd[76] != null && Dictionaries.VADict.ContainsKey(rowKd[76].ToString()))
-                                    {
-                                        rowKd[76] = Dictionaries.VADict[rowKd[76].ToString()];
-                                    }
-
-                                    else
-                                    {
-                                        rowKd[76] = "@";
-                                    }
-
-                                    if (rowKd[84] != null)
-                                    {
-                                        try
-                                        {
-                                            rowKd[84] = operations.GetPreisliste(rowKd[84].ToString());
-                                        }
-
-                                        catch (KeyNotFoundException ex)
-                                        {
-                                            WriteLogFile("Source     : " + ex.Source + "\n" +
-                                                    "TargetSite : " + ex.TargetSite + "\n" +
-                                                    "StackTrace : " + ex.StackTrace + "\n" +
-                                                    "Message    : " + ex.Message + "\n");
-                                            rowKd[84] = "";
-                                        }
-                                    }
-
-                                    if (rowKd[85] != null)
-                                    {
-                                        try
-                                        {
-                                            rowKd[85] = operations.GetKundenrabattgruppe(rowKd[85].ToString());
-                                        }
-
-                                        catch (KeyNotFoundException ex)
-                                        {
-                                            rowKd[85] = "";
-                                            WriteLogFile("Source     : " + ex.Source + "\n" +
-                                                    "TargetSite : " + ex.TargetSite + "\n" +
-                                                    "StackTrace : " + ex.StackTrace + "\n" +
-                                                    "Message    : " + ex.Message + "\n");
-                                        }
-                                    }
-
-                                    rowKd[86] = "Ja";
-                                }
-
-                                SQLMethods.Table2CSV(dataTable, ASCIIPath, preString);
-                            }
-                            else if (key.Key.ToString() == "DU_Lieferant")
-                            {
-                                query = key.Value;
-                                Operations operations = new Operations();
-                                DataTable kobensen = new DataTable();
-                                dataTable = new DataTable("DU_Lieferant");
-                                command.CommandText = query;
-                                dataTable = operations.WriteTable(command, dataTable);
-
-                                foreach (DataRow row in dataTable.Rows)
-                                {
-                                    row[0] = row[0].ToString() + Standort;
-                                    row[41] = operations.RemoveWhiteSpace(row[41].ToString());
-
-                                    if (row[41].ToString() != string.Empty && row[41].ToString().Length > 3)
-                                    {
-                                        if (!Dictionaries.LandUstidList.Contains(row[41].ToString().Substring(0, 2)))
-                                        {
-                                            row[39] = row[41].ToString();
-                                            row[41] = "";
-                                        }
-
-                                        if (row[3].ToString() == "DE")
-                                        {
-                                            if (Dictionaries.BundeslandDict.ContainsKey(row[13].ToString()))
-                                            {
-                                                row[20] = Dictionaries.BundeslandDict[row[13].ToString()];
-                                            }
-                                            else
-                                            {
-                                                row[20] = "@";
-                                            }
-
-                                            row[17] = operations.CorrectStrasse(row[17].ToString());
-                                        }
-                                        else
-                                        {
-                                            row[20] = "@";
-                                        }
-
-                                        if (row[3].ToString() == "CH")
-                                        {
-                                            row[39] = row[41].ToString();
-                                            row[41] = "";
-                                        }
-
-                                        if (row[6].ToString() == null | row[6].ToString() == "")
-                                        {
-                                            row[6] = row[4].ToString().ToUpper();
-                                        }
-
-                                        if (row[8] == null | row[8].ToString() == "")
-                                        {
-                                            try
-                                            {
-                                                row[8] = Dictionaries.anredenDict[row[7].ToString()];
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                WriteLogFile(e.Message);
-                                            }
-                                        }
-
-                                        try
-                                        {
-                                            if (row[3].ToString() != "FR")
-                                            {
-                                                string street = "";
-                                                string HNr = "";
-
-                                                (street, HNr) = Operations.GetHnr(row[17].ToString());
-                                                row[17] = street;
-                                                row[19] = HNr; ;
-                                            }
-
-                                            else
-                                            {
-                                                row[19] = "";
-                                            }
-
-                                            row[33] = Operations.SetBrancheNr(row[33].ToString());
-                                            row[34] = Dictionaries.Betriebskalender[row[20].ToString()];
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            SetText($"Error: {ex.Message}");
-                                            WriteLogFile("Source     : " + ex.Source + "\n" +
-                                                         "TargetSite : " + ex.TargetSite + "\n" +
-                                                         "StackTrace : " + ex.StackTrace + "\n" +
-                                                         "Message    : " + ex.Message + "\n");
-                                        }
-
-                                        if (Dictionaries.sprachenDict.ContainsKey(row[36].ToString()))
-                                        {
-                                            row[36] = Dictionaries.sprachenDict[row[36].ToString()];
-                                        }
-                                        else
-                                        {
-                                            row[36] = "@";
-                                        }
-
-                                        if (row[36].ToString() == "D" | row[4].ToString() == "DE" | row[4].ToString() == "CH" | row[4].ToString() == "AT")
-                                        {
-                                            row[7] = "Sehr geehrte Damen und Herren";
-                                        }
-                                        else if (row[36].ToString() == "F" | row[4].ToString() == "FR")
-                                        {
-                                            row[7] = "Mesdames, Messieurs";
-                                        }
-                                        else if (row[36].ToString() == "E" | row[4].ToString() == "GB")
-                                        {
-                                            row[7] = "Dear Sir / Madam";
-                                        }
-                                        else if (row[36].ToString() == "DU" | row[4].ToString() == "NL")
-                                        {
-                                            row[7] = "Geachte dames en heren";
-                                        }
-                                        else
-                                        {
-                                            row[7] = row[7];
-                                        }
-
-                                        try
-                                        {
-                                            row[41] = operations.RemoveWhiteSpace(row[41].ToString());
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            row[41] = row[41].ToString();
-                                            SetText($"Error: {ex.Message}");
-                                            WriteLogFile("Source     : " + ex.Source + "\n" +
-                                                         "TargetSite : " + ex.TargetSite + "\n" +
-                                                         "StackTrace : " + ex.StackTrace + "\n" +
-                                                         "Message    : " + ex.Message + "\n");
-                                        }
-
-                                        if (Dictionaries.LbdDictEinkauf.ContainsKey(row[52].ToString()))
-                                        {
-                                            row[52] = Dictionaries.LbdDictEinkauf[row[52].ToString()];
-                                        }
-
-                                        if (Dictionaries.VADictEinkauf.ContainsKey(row[53].ToString()))
-                                        {
-                                            row[53] = Dictionaries.VADictEinkauf[row[53].ToString()];
-                                        }
-                                        else
-                                        {
-                                            row[53] = "@";
-                                        }
-
-                                        row[52] = operations.EinkaufLbdCheck(row[52].ToString(), row[53].ToString());
-                                        row[42] = "4";
-                                        row[43] = "2";
-
-                                        if (row[58].ToString() != "0")
-                                        {
-                                            row[58] = "Ja";
-                                        }
-                                        else
-                                        {
-                                            row[58] = "Nein";
-                                        }
-
-                                        try
-                                        {
-                                            if (Standort == 1)
-                                            {
-                                                row[44] = Dictionaries.ZbdNrVK[row[44].ToString()];
-                                            }
-                                            if (Standort == 2)
-                                            {
-                                                if (Dictionaries.ZbdNrHBS2SDL.ContainsKey(row[44].ToString()))
-                                                {
-                                                    row[44] = Dictionaries.ZbdNrHBS2SDL[row[44].ToString()];
-                                                }
-                                                else
-                                                {
-                                                    row[44] = Dictionaries.ZbdNrVK[row[44].ToString()];
-                                                }
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            row[44] = "__" + row[44].ToString();
-                                            SetText($"Error: {ex.Message}");
-                                            WriteLogFile("Source     : " + ex.Source + "\n" +
-                                                         "TargetSite : " + ex.TargetSite + "\n" +
-                                                         "StackTrace : " + ex.StackTrace + "\n" +
-                                         
-                                                         "Message    : " + ex.Message + "\n");
-                                        }
-
-                                        SQLMethods.Table2CSV(dataTable, ASCIIPath, preString);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                dataTable = operations.WriteTable(command, dataTable);
-                                SQLMethods.Table2CSV(dataTable, ASCIIPath, preString);
-                                await Task.Delay(100);
-                                SetText("[" + DateTime.Now.ToString() + "] : " + preString + dataTable.TableName + "wurde exportiert. \n");
-
-                      
-                                UpdateProgressBar(10);
-                                UpdateProgressBar(10);
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    SetText($"Error: {ex.Message}");
-                    WriteLogFile("Source     : " + ex.Source + "\n" +
-                                 "TargetSite : " + ex.TargetSite + "\n" +
-                                 "StackTrace : " + ex.StackTrace + "\n" +
-                                 "Message    : " + ex.Message + "\n");
-                }
-                finally
-                {
-                    UpdateProgressBar(10);
-                    testCounter++;
-
-                    using (FileStream stream = new FileStream(@"C:\tmp\Testlaeufe.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite))
-                    using (StreamWriter writer = new StreamWriter(stream))
-                    {
-                        writer.BaseStream.Position = 0;
-                        writer.WriteLine("Testläufe absolviert : " + testCounter.ToString());
-                        stream.Close();
-                    }
-
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        progressbar.Value = 0;
-                        progressbar.BringIntoView();
-                        InitializeTimer();
-                    });
-                }
-            }
+            File.WriteAllText(fileName, sb.ToString());
         }
 
-        // Methode zum Schließen des Fensters
         private void BtnCloseClick(object sender, RoutedEventArgs e)
         {
             Close();
         }
-        
 
-
-
-        //Initialisierung des Timers für die Zeit bis zur nächsten Ausführung
         private void InitializeTimer()
         {
-            // Create a new instance of System.Timers.Timer
-            timer = new System.Timers.Timer();
 
-            // Set the interval for the timer (in milliseconds)
-            timer.Interval = 1000; // Change this value to set the desired interval
-
-            // Hook up the Elapsed event handler
             timer.Elapsed += TimerElapsed;
+            timer.Interval = 1000;
 
-            // Start the timer
             timer.Start();
         }
 
-        // Notify-Icon beim Minimieren
-        void InitializeNotifyIcon()
+        public void StartTimer()
         {
-            notifyIcon = new NotifyIcon
+            target = NextExecution(DateTime.Now);
+            SetRemainingTime(target - DateTime.Now.TimeOfDay);
+            InitializeTimer();
+        }
+
+        private void TimerElapsed(object sender, ElapsedEventArgs e)
+        {
+
+            if (DateTime.Now.TimeOfDay >= target)
             {
-                Icon = SystemIcons.Application,
-                Visible = true
-            };
+                timer.Stop();
+                SetText("Timer elapsed. Exporting data...\n");
+                Task.Run(() => ExecuteQueries(ExportData()));
+                target = NextExecution(DateTime.Now);
+                SetRemainingTime(target - DateTime.Now.TimeOfDay);
+                timer.Start();
+            }
+            else
+            {
+                SetRemainingTime(target - DateTime.Now.TimeOfDay);
+            }
 
-            notifyIcon.Click += NotifyIcon_Click;
         }
 
-        // Click auf Icon
-        void NotifyIcon_Click(object sender, EventArgs e)
+        public TimeSpan NextExecution(DateTime targetTime)
         {
-            WindowState = WindowState.Normal;
+            DateTime now = DateTime.Now;
+            DateTime nextExecution = targetTime.Date.Add(targetTime.TimeOfDay);
+
+            if (now > nextExecution)
+            {
+                nextExecution = nextExecution.AddDays(1);
+            }
+
+            return nextExecution - now;
         }
 
-        // Minimieren des Fensters
-        void OnStateChanged(EventArgs e)
+        public void SetRemainingTime(TimeSpan remainingTime)
         {
-            base.OnStateChanged(e);
+            string remainingTimeString = remainingTime.ToString(@"hh\:mm\:ss");
+            SetText($"Remaining time: {remainingTimeString}\n");
+        }
 
+        Dictionary<string, DataTable> SetTableDict(Dictionary<string, string> dictionary)
+        {
+            Dictionary<string, DataTable> tableDict = new Dictionary<string, DataTable>();
+
+            foreach (KeyValuePair<string, string> kvp in dictionary)
+            {
+                DataTable dataTable = new DataTable(kvp.Key);
+                dataTable = methods.GetTable(kvp.Value, OdbcSDL, kvp.Key);
+                tableDict.Add(kvp.Key, dataTable);
+            }
+
+            return tableDict;
+        }
+
+        override protected void OnStateChanged(EventArgs e)
+        {
             if (WindowState == WindowState.Minimized)
             {
                 Hide();
-                notifyIcon.ShowBalloonTip(1000, "Anwendung minimiert", "Die Anwendung wurde minimiert.", ToolTipIcon.Info);
             }
+
+            base.OnStateChanged(e);
         }
 
-        // Schließen des Fensters
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            base.OnClosing(e);
-            // Icon bei Schließen des Fensters entfernen
-            notifyIcon.Dispose();
+            e.Cancel = true;
+            WindowState = WindowState.Minimized;
         }
 
-        // Methode zum Anzeigen des Status Text
         void SetText(string text)
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            Dispatcher.Invoke(() =>
             {
-                txtStatus.Text += text;
-                txtStatus.BringIntoView();
+                txtStatus.Text += text + "\n";
             });
         }
 
-        // Standortkürzel für Dateinamen
-        void SetPreString(string connectionString)
+        public DataTable BelegeASCIITable()
         {
-            preString = string.Empty;
+            dataTable = new DataTable("SDL_Belege_ASCII");
 
-            if (connectionString.Contains("_SDL"))
+            string query = "select " +
+        "bel_nr," +
+        "bel_zbnr," +
+        "kdn_kontonr," +
+        "his_renr," +
+        "pkt_rgzahler " +
+        "from beleg,kunden,historie,persktn " +
+        "where  kdn_kontonr = bel_kontonr " +
+        "and his_kdnlfdnr = kdn_lfdnr " +
+        "and pkt_ktonr = kdn_kontonr " +
+        "and his_belnr = bel_nr " +
+        "and his_redat > 20231231 " +
+        "group by his_renr";
+
+
+            OdbcCommand command = new OdbcCommand(query, connection);
+            dataTable = WriteTable(command, dataTable);
+
+            return dataTable;
+        }
+
+        //----Einzelkunde ASCII
+        public void GetDataKundenEinzeln()
+        {
+            string query = string.Empty;
+
+            dataTable = new DataTable("Kunden_ASCII");
+            if (standort == "1")
             {
-                preString = "SDL_";
-            }
-            else if (connectionString.Contains("_HBS"))
-            {
-                preString = "HBS_";
+                query = "select " +
+                    "kdn_kontonr," +
+                    "kdn_zbnr," +
+                    "ans_ustid," +
+                    "kdn_ekvnr, " +
+                    "(select f1e_x_ekname from f1ekverband where f1e_x_eknr = kdn_ekvnr limit 1)  " +
+                    "from kunden,anschrift " +
+                    "where kdn_lfdnr = ansnr " +
+                    "and kdn_typ = 'D' ";
             }
         }
 
-        // Bewegen der ProgressBar
-        void UpdateProgressBar(int value)
+        //------------------Kundenndaten für transASCIIact
+        public void GetDataKunden()
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            string query = string.Empty;
+
+            dataTable = new DataTable("Kunden_ASCII");
+            if (standort == "1")
             {
-                progressbar.Value += value;
-                progressbar.BringIntoView();
-            });
+                query = "select " +
+                    "distinct kdn_kontonr," +
+                    "kdn_zbnr," +
+                    "ans_ustid," +
+                    "kdn_ekvnr, " +
+                    "(select f1e_x_ekname from f1ekverband where f1e_x_eknr = kdn_ekvnr limit 1)  " +
+                    "from kunden,anschrift " +
+                    "where kdn_lfdnr = ansnr " +
+                    "and kdn_typ = 'D' " +
+                    "group by kdn_kontonr";
+            }
+
+            if (standort == "2")
+            {
+                query = "select " +
+                   "distinct kdn_kontonr," +
+                   "kdn_zbnr," +
+                   "ans_ustid," +
+                   "kdn_ekvnr, " +
+                   "(select f1e_x_ekname from f1ekverband where f1e_x_eknr = kdn_ekvnr limit 1) AS f1ekname " +
+                   "from kunden,anschrift " +
+                   "where kdn_lfdnr = ansnr " +
+                   "and kdn_typ = 'D'";
+            }
+
+            OdbcCommand command = new OdbcCommand(query, connection);
+            dataTable = WriteTable(command, dataTable);
+            Table2CSV(dataTable);
         }
 
-        // Shortcut im Autostart anlegen
-        void CreateShortcutInAutostart()
+        //------------------Lieferantendaten für transASCIIact
+        public void GetDataLieferanten()
         {
+            dataTable = new DataTable("Lieferanten_ASCII");
+            string query = string.Empty;
+
+            if (standort == "1")
+            {
+                query = "select " +
+                    "kdn_kontonr," +
+                    "name_001," +
+                    "land," +
+                    "kdn_zbnr," +
+                    "ans_ustid " +
+                    "from kunden,anschrift " +
+                    "where kdn_lfdnr = ansnr " +
+                    "and kdn_kontonr not like ('82013') " +
+                    "and kdn_info_001 not like ('gelöscht') " +
+                    "and kdn_typ = 'K' " +
+                    "group by kdn_kontonr ";
+            }
+
+            if (standort == "2")
+            {
+                query = "select " +
+                    "kdn_kontonr," +
+                    "name_001," +
+                    "land," +
+                    "kdn_zbnr," +
+                    "ans_ustid " +
+                    "from kunden,anschrift " +
+                    "where kdn_lfdnr = ansnr " +
+                    "and kdn_typ = 'K' " +
+                    "and kdn_kontonr not like '99999' " +
+                    "group by kdn_kontonr ";
+            }
+
             try
             {
-                string startupFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-                FileInfo appFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                FileInfo shortcutFileInfo = new FileInfo(startupFolderPath + "\\Data2Check.lnk");
-
-                if (shortcutFileInfo.Exists)
-                {
-                    shortcutFileInfo.Delete();
-                }
-
-                using (StreamWriter writer = new StreamWriter(shortcutFileInfo.FullName))
-                {
-                    writer.WriteLine("[Data2Check]");
-                    writer.WriteLine("URL=file:///" + appFileInfo.FullName.Replace('\\', '/'));
-                    writer.WriteLine("IconIndex=0");
-                    writer.WriteLine("IconFile=" + appFileInfo.FullName);
-                }
+                OdbcCommand command = new OdbcCommand(query, connection);
+                dataTable = WriteTable(command, dataTable);
+                Table2CSV(dataTable);
             }
-            catch (Exception ex)
+            catch (Exception x)
             {
-                System.Windows.MessageBox.Show("Fehler : " + ex.Message);
+                Logger("[" + DateTime.Now.Day + "." + DateTime.Now.Month + "." + DateTime.Now.Year + "] \n" +
+                       "Message : \n " +
+                       "\n" +
+                       x.Message + "\n " +
+                       "Target : \n " +
+                       "\n" +
+                       x.TargetSite + "\n" +
+                       "\n" +
+                       "Data : " +
+                       "\n" +
+                       x.Data + "\n" +
+                       "Source : \n" +
+                       "\n" +
+                       x.Source + "\n");
             }
         }
 
-        //Button zum Anlegen des Shortcuts in Autostart
+        void CreateShortcutInAutostart()
+        {
+            string shortcutPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup) + "\\Data2Check.lnk";
+            string targetPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+
+            if (!File.Exists(shortcutPath))
+            {
+                shortcutPath = shortcutPath +
+                    "\\Data2Check.lnk";
+            }
+        }
+
         void ButtonCreateShortcut_Click(object sender, RoutedEventArgs e)
         {
             CreateShortcutInAutostart();
         }
 
-        // Button zum manuellen Starten des Datenexports
         void BtnStartClick(object sender, RoutedEventArgs e)
         {
-            _ = Task.Run(async () =>
-            {
-                await ExportData();
-            });
+            StartTimer();
         }
 
-        // Button zum Öffnen der Optionen
         void ButtonOptions_Click(object sender, RoutedEventArgs e)
         {
-            if (Window1.WindowState != WindowState.Maximized)
-            {
-
-            }
-            Window1.Activate();
             Window1.Show();
-            if (!Window1.IsVisible)
-            {
-                Window1.BringIntoView();
-            }
-            else
-            {
-                Window1.Show();
-            }
-
         }
     }
 }

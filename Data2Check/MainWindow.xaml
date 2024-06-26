@@ -36,7 +36,7 @@
         <Border Grid.Row="1" Background="White">
             <StackPanel Orientation="Vertical">
                 <Canvas Width="15"></Canvas>
-                <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" ClipToBounds="True" Height="auto">
+                <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" ClipToBounds="True" Height="239">
                     <TextBlock x:Name="txtStatus" Text="" Height="auto" Width="Auto" HorizontalAlignment="Left" TextWrapping="WrapWithOverflow"/>
                 </ScrollViewer>
                 <TextBlock x:Name="txtRemainingTime" Height="100" Width="Auto" Background="Black" HorizontalAlignment="Stretch"  FontSize="24" TextAlignment="Center" Foreground="#FFFF0A0A"/>

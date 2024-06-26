@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Data.Odbc;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Data2Check
 {
     class SQLMethods
     {
-        static OdbcConnection OdbcSDL = new OdbcConnection("DSN=Parity_SDL;Pooling=true;");
-        static OdbcConnection OdbcHBS = new OdbcConnection("DSN=Parity_HBS;Pooling=true;");
+        static string standort { get; set; }
+        static OdbcConnection OdbcSDL = new OdbcConnection("DSN=Parity_SDL; Pooling=true;Max Pool Size=200;Min Pool Size=10;Connect Timeout=30;");
+        static OdbcConnection OdbcHBS = new OdbcConnection("DSN=Parity_HBS; Pooling=true; Max Pool Size=200;Min Pool Size=10;Connect Timeout=30;");
         public OdbcConnection[] Connections = new OdbcConnection[] { OdbcSDL, OdbcHBS };
         public DataTableCollection TableCollection { get; set; }
         static Operations Operations = new Operations();
@@ -27,11 +25,11 @@ namespace Data2Check
         public static DataTable dataTable = new DataTable();
         static string Datum = string.Empty;
         static string DateFile = @"\\bauer-gmbh.org\DFS\SL\PROALPHA\10. Team-DÜ, EDI, WF\Datenexport\KundenLieferanten\LastDate.txt";
+
         public SQLMethods()
         {
             Operations = new Operations();
             Operations.FillAtradius(Atradius);
-
         }
 
         public DataTable GetTable(string query, OdbcConnection connection, string tableName)
@@ -40,25 +38,63 @@ namespace Data2Check
 
             using (OdbcCommand command = new OdbcCommand(query, connection))
             {
-                using (OdbcDataReader reader = command.ExecuteReader())
+                if (connection.State == ConnectionState.Closed)
                 {
+                    connection.Open();
+                }
+                try
+                {
+
                     table.Load(command.ExecuteReader());
+                }
+                catch
+                {
+                    Console.WriteLine($"Fehler beim Laden der Tabelle {tableName} \n");
+
+                }
+            }
+
+
+            return table;
+        }
+
+        public DataTable GetTable(string query, OdbcConnection connection)
+        {
+            DataTable table = new DataTable();
+
+            using (OdbcConnection conn = new OdbcConnection(connection.ConnectionString))
+            {
+                conn.Open();
+                using (OdbcCommand command = new OdbcCommand(query, conn))
+                {
+                    using (OdbcDataReader reader = command.ExecuteReader())
+                    {
+                        table.Load(reader);
+                    }
                 }
             }
 
             return table;
         }
 
+        //Eine Methode die den Fortschritt des Lesevorgangs aus der Datenbank anzeigt
+        public void Progress(int i, int count)
+        {
+            double progress = (double)i / count;
+            Console.WriteLine("Fortschritt: " + progress.ToString("P"));
+        }
+
+        //Bestimmen des Standorts
         public string GetStandort(OdbcConnection connection)
         {
+            string conString = connection.ConnectionString;
             string standort = string.Empty;
-
-            if (connection.ConnectionString.Contains("SDL"))
+            if (conString.Contains("SDL"))
             {
                 standort = "1";
             }
 
-            else if (connection.ConnectionString.Contains("HBS"))
+            else if (conString.Contains("HBS"))
             {
                 standort = "2";
             }
@@ -66,12 +102,11 @@ namespace Data2Check
             return standort;
         }
 
-
         //SQL-Queries SDL
-        public static Dictionary<string, string> QueriesSDL = new Dictionary<string, string>()
+        public Dictionary<string, string> QueriesSDL = new Dictionary<string, string>()
         {
-
-            {"DU_KundeRechnung", $"SELECT " +
+          /*  
+            {"DU_KundeRechnung", "SELECT " +
                    "kunden.kdn_kontonr," +
                    "'', " +
                    "anschrift.name_001, " +
@@ -224,12 +259,12 @@ namespace Data2Check
                           "and his_kdnlfdnr = kdn_lfdnr " +
                           "and (kunden.kdn_sperrkz = 0) " +
                           "and kdn_typ = 'D' " +
-                          $"and his_redat > "+DateTime.Now.AddDays(-2).ToString("yyyyMMdd")+ " " +
-                          $"and his_redat < "+DateTime.Now.AddDays(1).ToString("yyyyMMdd")+ " " +
+                          "and his_redat > "+DateTime.Now.AddDays(-2).ToString("yyyyMMdd")+ " " +
+                          "and his_redat < "+DateTime.Now.AddDays(1).ToString("yyyyMMdd")+ " " +
                           "Order BY kdn_kontonr "
 
     },
-                  {"DU_KundeAenderung", $"SELECT " +
+                  {"DU_KundeAenderung", "SELECT " +
                     "kunden.kdn_kontonr," +
                     "'', " +
                     "anschrift.name_001, " +
@@ -356,7 +391,7 @@ namespace Data2Check
                     "'@' ," +
                     "'@' ," +
                     "'@' ," +
-                    "'@' ," +
+                    "'@' ," +       
                     "'@' ," +
                     "'@' ," +
                     "'@' ," +
@@ -382,7 +417,7 @@ namespace Data2Check
                     "and pkt_ktonr = kdn_kontonr " +
                     "and kdn_typ = 'D' " +
                     "and ans_aenderung > "+DateTime.Now.AddDays(-2).ToString("yyyyMMdd")+ " " +
-            
+
                     "group by kdn_kontonr"
             },
 
@@ -394,47 +429,47 @@ namespace Data2Check
                     "''," +
                     "name_001," +
                     "land," +
-                    "ort," +
-        /*05*/      "anssuch," +
-                    "ans_suwo2," +
-                    "'@'," +
-                    "'@'," +
-                    "'@'," +
-                    "'@'," +
-                    "name_002," +
-                    "name_003," +
-                    "plz," +
-                    "'@'," +
-                    "'@'," +
-                    "'@'," +
-                    "strasse," +
-                    "'@'," +
-                    "'@'," +
-        /*20*/      "'@'," +
-                    "ans_pf_plz," +
-                    "ans_postfach," +
-                    "'ja'," +
-                    "ans_email," +
-                    "ans_homepage," +
-                    "ans_telex," +
-                    "ans_telefon," +
-                    "ans_telefax," +
-                    "'@'," +
-                    "anssuch," +
-                    "ans_suwo2," +
-                    "''," +
-                    "kdn_x_branche," +
-                    "'@'," +
-                    "'@'," +
-                    "kdn_sprnr," +
-                    "'@',"+
-                    "kdn_kredkontonr," +
-                    "ans_stnr," +
-        /*40*/      "'0'," +
-                    "ans_ustid," +
-                    "'@'," +
-                    "'@'," +
-        /*44*/      "kdn_zbnr," +
+              "ort," +
+              "anssuch," +
+              "ans_suwo2," +
+              "'@'," +
+              "'@'," +
+              "'@'," +
+              "'@'," +
+              "name_002," +
+              "name_003," +
+              "plz," +
+              "'@'," +
+              "'@'," +
+              "'@'," +
+              "strasse," +
+              "'@'," +
+              "'@'," +
+              "'@'," +
+              "ans_pf_plz," +
+              "ans_postfach," +
+              "'ja'," +
+              "ans_email," +
+              "ans_homepage," +
+              "ans_telex," +
+              "ans_telefon," +
+              "ans_telefax," +
+              "'@'," +
+              "anssuch," +
+              "ans_suwo2," +
+              "''," +
+              "kdn_x_branche," +
+              "'@'," +
+              "'@'," +
+              "kdn_sprnr," +
+              "'@',"+
+              "kdn_kredkontonr," +
+              "ans_stnr," +
+              "'0'," +
+              "ans_ustid," +
+              "'@'," +
+              "'@'," +
+              "kdn_zbnr," +
                     "kdn_kredlimit," +
                     "'1'," +
                     "'2'," +
@@ -442,7 +477,7 @@ namespace Data2Check
                     "'4'," +
                     "'5'," +
                     "'6'," +
-        /*52*/      "kdn_lbdnr," +
+                    "kdn_lbdnr," +  //53
                     "kdn_vsanr," +
                     "kdn_c_minbst," +
                     "'@'," +
@@ -467,10 +502,10 @@ namespace Data2Check
                     "(select f1e_x_ekname from f1ekverband where f1e_x_eknr = kdn_ekvnr limit 1)  " +
                     "from kunden,anschrift " +
                     "where kdn_lfdnr = ansnr " +
-                    "and kdn_typ = 'D' " 
-                    
-            },
+                    "and kdn_typ = 'D' "
 
+            },
+    
             { "Lieferanten_ASCII" ,  "kdn_kontonr," +
                     "name_001," +
                     "land," +
@@ -482,7 +517,7 @@ namespace Data2Check
                     "and kdn_info_001 not like ('gelöscht') " +
                     "and kdn_typ = 'K' " +
                     "group by kdn_kontonr "},
-
+          */
             {"Belege_ASCII","select " +
                 "bel_nr," +
                 "bel_zbnr," +
@@ -497,9 +532,9 @@ namespace Data2Check
         };
 
         //SQL-Queries HBS
-        public static Dictionary<string, string> QueriesHBS = new Dictionary<string, string>()
+        public Dictionary<string, string> QueriesHBS = new Dictionary<string, string>()
         {
-
+            /*
             {"DU_Lieferant",$"SELECT " +
                        "kunden.kdn_kontonr," +                         //0
                        "'@' as Profitcenter, " +
@@ -600,9 +635,9 @@ namespace Data2Check
                        "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +
                        "and (kunden.kdn_sperrkz = 0) " +
                        "and ans_typ = 'D' " +
-                       "and kdn_aenderung >"+DateTime.Now.AddDays(-2).ToString("yyyyMMdd")+ " " + 
+                       "and kdn_aenderung >"+DateTime.Now.AddDays(-2).ToString("yyyyMMdd")+ " " +
                        "group by kdn_kontonr"},
-
+            */
             {"Lieferanten_ASCII","select " +
                     "kdn_kontonr," +
                     "name_001," +
@@ -619,7 +654,7 @@ namespace Data2Check
 
 
         // Kunden für transASCIIact
-        public DataTable GetKundenASCII(OdbcConnection connection, string standort)
+        public DataTable GetKundenASCII(OdbcConnection connection, string preString)
         {
             ConnectionWatch(connection);
             OdbcConnection conn = new OdbcConnection(connection.ConnectionString);
@@ -772,7 +807,7 @@ namespace Data2Check
                 }
 
                 DataTable clone = table.Clone();
-                int i = 0;
+
 
                 foreach (DataColumn col in clone.Columns)
                 {
@@ -795,13 +830,9 @@ namespace Data2Check
 
 
         // SQL-Abfrage Kunden
-        public static string KundenString(string datum, string standort)
+        public static string KundenString(string datum, string preString)
         {
-            string query = string.Empty;
-
-            if (standort == "1")
-            {
-                query = "SELECT " +
+            string query = "SELECT " +
                    "kunden.kdn_kontonr," +
                    "'', " +
                    "anschrift.name_001, " +
@@ -954,20 +985,20 @@ namespace Data2Check
                           "and (kunden.kdn_sperrkz = 0) " +
                           "and kdn_typ = 'D' " +
                           "and kdn_le_redat > {0} " +
-                          "and kdn_le_redat < {1} "+
-                          
+                          "and kdn_le_redat < {1} " +
+
                           "GROUP BY kdn_kontonr " +
                           "";
-            }
+
 
             return query;
         }
         // SQL-Abfrage Lieferanten
-        public static string LieferantenString(string datum, string standort)
+        public static string LieferantenString(string datum, string preString)
         {
             string query = string.Empty;
 
-            if (standort == "1")
+            if (preString.Contains("SDL"))
             {
                 query =
                  "select " +
@@ -1036,7 +1067,7 @@ namespace Data2Check
                  " ";
             }
 
-            if (standort == "2")
+            if (preString.Contains("HBS"))
             {
                 query =
                     "select " +
@@ -1139,13 +1170,28 @@ namespace Data2Check
                     "where bel_datum > 20221231 and kdn_kontonr = bel_kontonr and his_belnr = bel_nr and bel_typ = '1' " +
                     ""
         };
+        internal bool IsDataReady(int count, string standort)
+        {
+            if (standort == "1" && count == 5)
+            {
+                return true;
+            }
+            else if (standort == "2" && count == 2)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         //SQL-Abfrage Kunden transASCIIact
-        public static string GetDataKunden(string standort)
+        public static string GetDataKunden(string preString)
         {
             string query = string.Empty;
 
-            if (standort == "1")
+            if (preString.Contains("SDL"))
             {
                 query = "select " +
                     "kdn_kontonr," +
@@ -1158,7 +1204,7 @@ namespace Data2Check
                     "and kdn_typ = 'D' " +
                     " ";
             }
-            else if (standort == "2")
+            else if (preString.Contains("HBS"))
             {
                 query = "select " +
                    "kdn_kontonr," +
@@ -1177,11 +1223,11 @@ namespace Data2Check
         }
 
         // SQL-Abfrage Lieferanten für transASCIIact
-        public static string GetDataLieferanten(string standort)
+        public static string GetDataLieferanten(string preString)
         {
             string query = string.Empty;
 
-            if (standort == "1")
+            if (preString.Contains("SDL"))
             {
                 query = "select " +
                     "kdn_kontonr," +
@@ -1197,7 +1243,7 @@ namespace Data2Check
                     " ";
             }
 
-            if (standort == "2")
+            if (preString.Contains("HBS"))
             {
                 query = "select " +
                     "kdn_kontonr," +
@@ -1232,10 +1278,19 @@ namespace Data2Check
             return query;
         }
 
+        //Festlegen GetDataAsync(Connections[Standort - 1], dateStart, dateEnd)
+        public async Task GetDataAsync(OdbcConnection connection, string path, string preString)
+        {
+            ConnectionWatch(connection);
+            OdbcConnection conn = new OdbcConnection(connection.ConnectionString);
+            DataTable dataTable = new DataTable();
+            using (OdbcCommand command = new OdbcCommand(KundenString(preString, conn.ConnectionString)))
+            {
+                dataTable.Load(command.ExecuteReader());
+            }
+            dataTable.TableName = "Kunden_ASCII";
+            Table2CSV(dataTable, path, preString);
+        }
+
     }
 }
-
-
-
-
-

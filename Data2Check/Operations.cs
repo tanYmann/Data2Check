@@ -20,6 +20,25 @@ namespace Data2Check
 
         }
 
+        private void WriteLog(string line)
+        {
+            //Prüfen ob Ordner  und Datei existiert, gegebenenfalls erstellen
+            if (!Directory.Exists(@"c:\tmp\logs"))
+            {
+                Directory.CreateDirectory(@"c:\tmp\logs");
+            }
+
+            //Prüfen ob Datei existiert, gegebenenfalls erstellen
+            if (!File.Exists(@"c:\tmp\logs\D2CLog.txt"))
+            {
+                File.Create(@"c:\tmp\logs\D2CLog.txt");
+            }
+            using (StreamWriter writer = File.AppendText(@"c:\tmp\logs\D2CLog.txt"))
+            {
+                writer.WriteLine($"{DateTime.Now} : {line}");
+            }
+        }
+
         //Tabelle schreiben
         public DataTable WriteTable(OdbcCommand command, DataTable table)
         {
@@ -45,7 +64,7 @@ namespace Data2Check
 
             catch (Exception oex)
             {
-
+                WriteLog(oex.Message);
             }
 
         
@@ -65,7 +84,7 @@ namespace Data2Check
                 }
                 catch (Exception ex)
                 {
-
+                    WriteLog(ex.Message);
                 }
             }
             if (columntable != null)
@@ -154,11 +173,9 @@ namespace Data2Check
                     }
                     catch (Exception ex)
                     {
-
-
+                        WriteLog(ex.Message);
                     }
                 }
-
             }
         }
 
@@ -419,8 +436,9 @@ namespace Data2Check
             }
             catch (Exception ex)
             {
-
+                WriteLog(ex.Message);
             }
+
             return lbdnr;
         }
 
@@ -713,6 +731,74 @@ namespace Data2Check
             }
         }
 
+        //Festlegen GetDataAsync(Connections[Standort - 1], dateStart, dateEnd)
+        public async Task<DataTable> GetDataAsync(OdbcCommand command, DataTable table)
+        {
+            DataTable dataTable = table.Copy();
+            string cmd = command.CommandText;
+            DataSet dataSet = new DataSet();
+            Type type = typeof(string);
+            DataTable cachetable = new DataTable();
+            DataTable columntable = Tables.s_Kunde.Clone();
+            command.CommandText = cmd;
+            command.CommandTimeout = 30;
+
+            if (command.Connection.State != ConnectionState.Open)
+            {
+                command.Connection.Open();
+            }
+
+            try
+            {
+                table.Load(await command.ExecuteReaderAsync());
+            }
+
+            catch (Exception oex)
+            {
+                WriteLog(oex.Message);
+            }
+
+            DataTable clone = table.Clone();
+            int i = 0;
+
+            foreach (DataColumn col in clone.Columns)
+            {
+                col.ReadOnly = false;
+                col.DataType = typeof(string);
+            }
+            foreach (DataRow row in table.Rows)
+            {
+                try
+                {
+                    clone.ImportRow(row);
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+            if (columntable != null)
+            {
+                foreach (DataColumn col in clone.Columns)
+                {
+
+                    try
+                    {
+                        col.ColumnName = columntable.Columns[i].ColumnName.ToString();
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+
+                    i++;
+                }
+            }
+
+            return clone;
+        }
+
+        // Füllen der Kobensenliste
         public void FillUstidKobensen()
         {
             int count = 0;
