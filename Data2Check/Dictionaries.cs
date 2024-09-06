@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Data2Check
 {
@@ -12,7 +8,7 @@ namespace Data2Check
         {
 
         }
-        public Dictionary<string, string> HBSLief2Change = new Dictionary<string, string>()
+        public static Dictionary<string, string> HBSLief2Change = new Dictionary<string, string>()
         {
            {"77103","771071"},
 {"77140","771521"},
@@ -80,7 +76,7 @@ namespace Data2Check
 
 
         };
-        
+
         // Verbaende Dictionary -neu-
         public static Dictionary<string, string> VerbaendeDict = new Dictionary<string, string>()
         {
@@ -134,7 +130,7 @@ namespace Data2Check
             {"40514","140352"},
             {"40518","140352"}
         };
-        
+
         // Betriebskalnder Dictionary
         public static Dictionary<string, string> Betriebskalender = new Dictionary<string, string>()
         {
@@ -1867,7 +1863,7 @@ namespace Data2Check
             };
 
         // Dictionary Zahlungsbedingungen HBS in SDL wandeln
-        public static  Dictionary<string, string> ZbdNrHBS2SDL = new Dictionary<string, string>
+        public static Dictionary<string, string> ZbdNrHBS2SDL = new Dictionary<string, string>
                     {
                         {"1  ","1 " },
                         {"17 ","3 "},
@@ -2187,7 +2183,7 @@ namespace Data2Check
         };
 
         //Lieferbedingungen NUR EINKAUF
-        public static  Dictionary<string, string> LbdDictEinkauf = new Dictionary<string, string>
+        public static Dictionary<string, string> LbdDictEinkauf = new Dictionary<string, string>
         {
             {"1","1"},
             {"2","2"},
@@ -17013,7 +17009,7 @@ namespace Data2Check
         };
 
         // JungheinrichDictionary
-        public static  Dictionary<string, string> JungheinrichDict = new Dictionary<string, string>()
+        public static Dictionary<string, string> JungheinrichDict = new Dictionary<string, string>()
         {
             {"29283","129283"},
             {"29365","129283"},
@@ -17080,7 +17076,7 @@ namespace Data2Check
             "77462",    "77822",    "78109",    "78184",    "78610",    "78840",    "79028",    "79348",    "81210",    "81264",    "81276",    "81327",    "83676",    "86465",    "87646"
 
         };
-       
+
         public static List<string> VerbandList = new List<string>()
         {
             "119516",

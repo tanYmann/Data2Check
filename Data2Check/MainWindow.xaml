@@ -46,12 +46,16 @@
         <Border Grid.Row="2" Background="LightGray" Height="74" VerticalAlignment="Top" >
             <StackPanel Orientation="Horizontal" Height="55" VerticalAlignment="Center">
                 <Canvas Width="55"/>
-                <Button x:Name="ButtonStart" Content=" S T A R T " HorizontalAlignment="Center" Width="85"/>
+                <Button x:Name="ButtonStart" Content=" S T A R T " HorizontalAlignment="Center" Width="85" Click="BtnStartClick"/>
                 <Canvas Width="8"/>
-                <Button x:Name="ButtonOptions" Content=" OPTIONEN " HorizontalAlignment="Center" Width="85"/>
+                <Button x:Name="ButtonOptions" Content=" OPTIONEN " HorizontalAlignment="Center" Width="85" Click="ButtonOptions_Click"/>
                 <Canvas Width="50"></Canvas>
                 <TextBlock x:Name="ElapsedTimeText" HorizontalAlignment="Right" FontSize="24" Width="290"/>
             </StackPanel>
         </Border>
+        <StackPanel>
+                <Label x:Name="lblStatus" Content="Läufe ohne Unterbrechung :" HorizontalAlignment="Left" Width="Auto" Height="Auto" FontSize="16"/>
+        </StackPanel>
+    
     </Grid>
 </Window>

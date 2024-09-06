@@ -7,6 +7,7 @@ namespace Data2Check
     /// </summary>
     public partial class TimerWindow : Window
     {
+
         public TimerWindow()
         {
             InitializeComponent();

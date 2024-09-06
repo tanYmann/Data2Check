@@ -4,11 +4,9 @@ using System.Data;
 using System.Data.Odbc;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Xml;
 
 namespace Data2Check
 {
@@ -20,7 +18,7 @@ namespace Data2Check
 
         }
 
-        private void WriteLog(string line)
+        private static void WriteLog(string line)
         {
             //Prüfen ob Ordner  und Datei existiert, gegebenenfalls erstellen
             if (!Directory.Exists(@"c:\tmp\logs"))
@@ -40,42 +38,43 @@ namespace Data2Check
         }
 
         //Tabelle schreiben
-        public DataTable WriteTable(OdbcCommand command, DataTable table)
+        public DataTable WriteTable(OdbcCommand command, DataTable table, OdbcConnection connection)
         {
-
             DataTable dataTable = table.Copy();
             string cmd = command.CommandText;
             DataSet dataSet = new DataSet();
             Type type = typeof(string);
             DataTable cachetable = new DataTable();
-            DataTable columntable = Tables.s_Kunde.Clone();
             command.CommandText = cmd;
             command.CommandTimeout = 30;
 
-            if (command.Connection.State != ConnectionState.Open)
-            {
-                command.Connection.Open();
-            }
-
             try
             {
-                table.Load(command.ExecuteReader());
-            }
+                if (connection.State != ConnectionState.Open)
+                {
+                    connection.Open();
+                }
 
+                table.Load(command.ExecuteReader());
+
+                connection.Close();
+            }
             catch (Exception oex)
             {
                 WriteLog(oex.Message);
             }
 
-        
-            DataTable clone = table.Clone();
+            DataTable clone = new DataTable();
+            clone = table.Clone();
             int i = 0;
 
             foreach (DataColumn col in clone.Columns)
             {
+                clone.PrimaryKey = new DataColumn[] { clone.Columns[0] };
                 col.ReadOnly = false;
                 col.DataType = typeof(string);
             }
+
             foreach (DataRow row in table.Rows)
             {
                 try
@@ -87,23 +86,6 @@ namespace Data2Check
                     WriteLog(ex.Message);
                 }
             }
-            if (columntable != null)
-            {
-                foreach (DataColumn col in clone.Columns)
-                {
-
-                    try
-                    {
-                        col.ColumnName = columntable.Columns[i].ColumnName.ToString();
-                    }
-                    catch (Exception e)
-                    {
-
-                    }
-
-                    i++;
-                }
-            }
 
             return clone;
         }
@@ -112,13 +94,9 @@ namespace Data2Check
         public void FillUstidKobensen(DataTable kobensen)
         {
             int count = 0;
-
             string KobensenFile = @"C:\Users\Admin.TanPat\source\repos\tanYmann\Data2Check\Data2Check\Kobensen_Anhang_B_I.csv";
-
             FileStream streamIn = new FileStream(KobensenFile, FileMode.Open, FileAccess.Read);
-
             StreamReader sr = new StreamReader(streamIn);
-
             string[] field = new string[9];
 
             while (!sr.EndOfStream)
@@ -150,7 +128,6 @@ namespace Data2Check
                     }
 
                     kobensen.PrimaryKey = new DataColumn[] { kobensen.Columns[field[0]] };
-
                     count++;
 
                 }
@@ -165,7 +142,6 @@ namespace Data2Check
                         foreach (string entry in field)
                         {
                             row.SetField(countF, entry);
-
                             countF++;
                         }
 
@@ -181,7 +157,6 @@ namespace Data2Check
 
         //Pfad Datei letztes Exportdatum
         public FileInfo FileInfoDate = new FileInfo(Directory.GetCurrentDirectory().ToString() + "\\LastDate.txt");
-
 
         public string Street { get; set; }
         public string HNr { get; set; }
@@ -357,6 +332,21 @@ namespace Data2Check
             }
         }
 
+        // Setzen PLZ Niederlande
+        public string SetPLZ(string plz, string ort)
+        {
+            string ending = ort.Substring(0, 2);
+            plz = plz + " " + ending;
+
+            return plz;
+        }
+
+        //Setzen Ort Niederlande
+        public string SetOrtNL(string ort)
+        {
+            ort = ort.Substring(3);
+            return ort;
+        }
 
         // -----------------------------------------------Setzen der Branchennummer mit drei Ziffern (führende 0)
         public static string SetBrancheNr(string branchennr)
@@ -639,42 +629,72 @@ namespace Data2Check
         }
 
         // -----------------------------------------------Setzen Kundenrabattgruppe
-        public string GetKundenrabattgruppe(string concat)
+        public (string, string) GetKundenrabattgruppe(string concat)
         {
             string rabattgruppe = "@";
+            string preisliste = "@";
 
-            if (concat.StartsWith("1") || concat.StartsWith("5") || concat.StartsWith("6") || concat.StartsWith("8"))
+            if (concat.StartsWith("1"))
             {
                 rabattgruppe = "010";
-            }
-
-            else if ((concat.StartsWith("2_AT") || concat.StartsWith("2_CH") || concat.StartsWith("2_GB") || concat.StartsWith("2_PL")) && concat.EndsWith("_100"))
-            {
-                rabattgruppe = "030";
+                preisliste = "010";
             }
 
             else if (concat.StartsWith("2"))
             {
-                rabattgruppe = "020";
+                if (((concat.StartsWith("2_AT") | concat.StartsWith("2_CH") | concat.StartsWith("2_GB") | concat.StartsWith("2_PL")) && concat.EndsWith("_100")))
+                {
+                    rabattgruppe = "030";
+                    preisliste = "010";
+                }
+                else
+                {
+                    rabattgruppe = "020";
+                    preisliste = "010";
+                }
+
             }
 
             else if (concat.StartsWith("3"))
             {
                 rabattgruppe = "040";
+                preisliste = "020";
             }
 
             else if (concat.StartsWith("4"))
             {
                 rabattgruppe = "050";
+                preisliste = "020";
+            }
+
+            else if (concat.StartsWith("5"))
+            {
+                rabattgruppe = "070";
+                preisliste = "010";
+            }
+
+            else if (concat.StartsWith("6"))
+            {
+                rabattgruppe = "060";
+                preisliste = "010";
             }
 
             else if (concat.StartsWith("7"))
             {
                 rabattgruppe = "060";
+                preisliste = "010";
             }
 
-            return rabattgruppe;
+
+            else if (concat.StartsWith("8"))
+            {
+                rabattgruppe = "010";
+                preisliste = "010";
+            }
+
+            return (rabattgruppe, preisliste);
         }
+
 
         // Füllen der Atradiustabelle
         public void FillAtradius(DataTable Atradius)
@@ -870,6 +890,28 @@ namespace Data2Check
 
             }
         }
+
+        public Dictionary<string, string> Betriebskalender = new Dictionary<string, string>()
+        {
+
+            {"NRW", "1"},
+            { "SAH", "2"},
+            {"BAY", "3"},
+            {"RLP", "4"},
+            {"MVP", "5"},
+            {"NIE", "6"},
+            {"BWÜ", "7"},
+            {"HH", "8"},
+            {"HB", "9"},
+            {"BER", "10"},
+            {"THÜ", "11"},
+            {"SAC", "12"},
+            {"BDB", "13"},
+            {"HES", "14"},
+            {"SAA", "15"},
+            {"SWH", "16"},
+
+        };
     }
 }
 
