@@ -66,8 +66,6 @@ namespace Data2Check
             SetText("Anwendung gestartet.\n");
             SetText("Netzwerkverbindung wird geprüft.\n");
             SetText("VPN-Verbindung wird geprüft.\n");
-
-
             SetText("ODBC-Treiber wird geprüft.\n");
             SetText("ODBC-Verbindung wird geprüft.\n");
             SetText("Daten werden exportiert.\n");
