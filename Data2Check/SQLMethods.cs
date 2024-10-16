@@ -869,7 +869,7 @@ namespace Data2Check
                    "'' as 'Breitengrad'," +
                    "anschrift.anssuch AS Expr10, " +
                    "anschrift.ans_suwo2 AS Expr11, " +
-                   "'@' AS 'Verteileruppe'," +
+                   "'VK'," +
                    "kunden.kdn_x_branche, " +
                    "'@' AS 'Region'," +               //38
                    "'@', " +
