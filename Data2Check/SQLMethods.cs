@@ -833,155 +833,157 @@ namespace Data2Check
         public static string KundenString(string datum, string preString)
         {
             string query = "SELECT " +
-                   "kunden.kdn_kontonr," +
-                   "'', " +
-                   "anschrift.name_001, " +
-                   "anschrift.land, " +
-                   "anschrift.ort, " +
-                   "anschrift.anssuch, " +
-                   "anschrift.ans_suwo2, " +
-                   "'@', " +
-                   "'@'," +
-                   "'@', " +                              //09
-                   "'@', " +
-                   "anschrift.name_002," +                //11
-                   "anschrift.name_003, " +
-                   "anschrift.plz," +
-                   " '@' AS Expr3, " +
-                   "anschrift.ans_teilort, " +
-                   "'@' AS Expr4, " +
-                   "anschrift.strasse, " +
-                   "'@' AS Expr5, " +
-                   "'Hausnummer' AS Hausnummer," +
-                   "'@' AS Bundesland, " +
-                   "anschrift.ans_pf_plz, " +
-                   "anschrift.ans_postfach, " +
-                   "'Ja' AS Expr8, " +
-                   "anschrift.ans_email, " +
-                   "anschrift.ans_homepage, " +
-                   "anschrift.ans_telex, " +
-                   "anschrift.ans_telefon, " +
-                   "'' as 'Autotelefon'," +             //28
-                   "anschrift.ans_telefax, " +
-                   "'' as 'Telefon2'," +
-                   "'' as 'Telefax2'," +
-                   "'' as 'Längengrad'," +
-                   "'' as 'Breitengrad'," +
-                   "anschrift.anssuch AS Expr10, " +
-                   "anschrift.ans_suwo2 AS Expr11, " +
-                   "'VK'," +
-                   "kunden.kdn_x_branche, " +
-                   "'@' AS 'Region'," +               //38
-                   "'@', " +
-                   "kdn_sprnr, " +                   //40
-                   "'' as 'ABC-Klasse'," +
-                   "'@' AS 'Teilestatistik', " +
-                   "'@' AS 'Webshop', " +
-                   "'@' AS 'Bestandsfaktor', " +
-                   "'@' AS 'Lagerort', " +
-                   "kunden.kdn_erstellt, " +
-                   "persktn.pkt_kdn_lief_nr ," +
-                   "anschrift.ans_stnr, " +          //48
-                   "'0'," +
-                   "anschrift.ans_ustid, " +         //50
-                   "'@' AS 'Rechnungsintervall', " +
-                   "kunden.kdn_faktkz, " +
-                   "persktn.pkt_rgzahler, " +                      //53
-                   "'@' AS  'Konzern', " +
-                   "'@' AS 'Bezeichnung', " +
-                   "kunden.kdn_ekvnr, " +                          //56          
-                   "(select f1e_x_ekname from f1ekverband where f1ekverband.f1e_x_eknr = kunden.kdn_ekvnr limit 1) AS f1ekname, " +
-                   "'@' AS Expr24, " +                             //55
-                   "'@' AS Expr25, " +
-                   "'@' AS Expr26, " +
-                   "'@' AS Expr27, " +
-                   "'@' AS Expr28, " +
-                   "'1', " +                                       //63
-                   "'2', " +
-                   "'3', " +
-                   "'4', " +
-                   "'5', " +
-                   "'6', " +
-                   "'3' as 'Zahlungsart', " +                      //69
-                   "'@' AS Expr36, " +
-                   "kdn_zbnr, " +                                  //71    
-                   "kunden.kdn_kredlimit, " +                      //72
-                   "kdn_c_ohneklm, " +                             //73
-                   "'@' AS 'Mahnverfahren', " +                    //74
-                   "'@' AS Expr39, " +                             //75
-                   "'@' AS Expr40, " +                             //76
-                   "'@' AS Expr41, " +                             //77
-                   "kunden.kdn_vsanr, " +                          //78
-                   "kdn_lbdnr," +                                        //79
-                   "'@' as 'Lieferrestriktion',  " +               //80    
-                   "'' as 'Vertrags'," +                                          //81
-                   "'@' AS 'KredLimit WKV', " +
-                   "kunden.kdn_kredvers, " +
-                   "'@' AS 'WKV-Kennzeichen', " +
-                   "'@' as 'l. Auskunft', " +
-                   "kunden.kdn_x_adrsel, " +                       //86
-                   "kdn_x_adrsel||'_'||anschrift.land||'_'||kdn_vertrnr_001, " +//87
-                   "kdn_x_rabattausw, " +                         //88
-                   "'Ja' AS Expr50, " +                           //89
-                   "'Ja' AS Expr51, " +                           //90
-                   "'@' AS Expr52, " +                            //91 
-                   "'0'as 'Sammellieferschein', " +               //92 
-                   "kdn_x_ust_wann," +                            //93
-                   "'' as 'Bankverbindung'," +
-                   "'Ja' as 'Default'," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "kdn_rekopie," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' as 'Versandkalender'," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@' ," +
-                   "'@', " +
-                   "'@' " +          //145
-                "FROM kunden, anschrift,persktn " +
-                          "WHERE (persktn.pkt_ansnr = anschrift.ansnr) " +
-                          "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +
+                "kunden.kdn_kontonr," +
+                "'', " +
+                "anschrift.name_001, " +
+                "anschrift.land, " +
+                "anschrift.ort, " +
+                "anschrift.anssuch, " +
+                "anschrift.ans_suwo2, " +
+                "'@', " +
+                "'@'," +
+                "'@', " +                              //09
+                "'@', " +
+                "anschrift.name_002," +                //11
+                "anschrift.name_003, " +
+                "anschrift.plz," +
+                " '@' AS Expr3, " +
+                "anschrift.ans_teilort, " +
+                "'@' AS Expr4, " +
+                "anschrift.strasse, " +
+                "'@' AS Expr5, " +
+                "'Hausnummer' AS Hausnummer," +
+                "'@' AS Bundesland, " +
+                "anschrift.ans_pf_plz, " +
+                "anschrift.ans_postfach, " +
+                "'Ja' AS Expr8, " +
+                "anschrift.ans_email, " +
+                "anschrift.ans_homepage, " +
+                "anschrift.ans_telex, " +
+                "anschrift.ans_telefon, " +
+                "'' as 'Autotelefon'," +             //28
+                "anschrift.ans_telefax, " +
+                "'' as 'Telefon2'," +
+                "'' as 'Telefax2'," +
+                "'' as 'Längengrad'," +
+                "'' as 'Breitengrad'," +
+                "anschrift.anssuch AS Expr10, " +
+                "anschrift.ans_suwo2 AS Expr11, " +
+                "'VK'," +
+                "kunden.kdn_x_branche, " +
+                "'@' AS 'Region'," +               //38
+                "'@', " +
+                "kdn_sprnr, " +                   //40
+                "'' as 'ABC-Klasse'," +
+                "'JA', " +
+                "'@' AS 'Webshop', " +
+                "'@' AS 'Bestandsfaktor', " +
+                "'@' AS 'Lagerort', " +
+                "kunden.kdn_erstellt, " +
+                "persktn.pkt_kdn_lief_nr ," +
+                "'', " +          //48
+                "'0'," +
+                "anschrift.ans_ustid, " +         //50
+                "'@' AS 'Rechnungsintervall', " +
+                "kunden.kdn_faktkz, " +
+                "persktn_rgzahler as 'Rechnungszahler', " +                      //53
+                "'@' AS  'Konzern', " +
+                "'@' AS 'Bezeichnung', " +
+                "kunden.kdn_ekvnr, " +                          //56          
+                "(select f1e_x_ekname from f1ekverband where f1ekverband.f1e_x_eknr = kunden.kdn_ekvnr limit 1) AS f1ekname, " +
+                "'@' AS Expr24, " +                             //55
+                "'@' AS Expr25, " +
+                "'@' AS Expr26, " +
+                "'@' AS Expr27, " +
+                "'@' AS Expr28, " +
+                "'1', " +                                       //63
+                "'2', " +
+                "'3', " +
+                "'4', " +
+                "'5', " +
+                "'6', " +
+                "'3' as 'Zahlungsart', " +                      //69
+                "'@' AS Expr36, " +
+                "kdn_zbnr, " +                                  //71    
+                "kunden.kdn_kredlimit, " +                      //72
+                "'JA', " +                             //73
+                "'2' AS 'Mahnverfahren', " +                    //74
+                "'@' AS Expr39, " +                             //75
+                "'@' AS Expr40, " +                             //76
+                "'@' AS Expr41, " +                             //77
+                "kunden.kdn_vsanr, " +                          //78
+                "kdn_lbdnr," +                                        //79
+                "'@' as 'Lieferrestriktion',  " +               //80    
+                 "'' as 'Vertrags'," +                                          //81
+                "'@' AS 'KredLimit WKV', " +
+                "kunden.kdn_kredvers, " +                       //83
+                "'@' AS 'WKV-Kennzeichen', " +
+                "'@' as 'l. Auskunft', " +
+                "kunden.kdn_x_adrsel, " +                       //86
+                "kdn_x_adrsel||'_'||anschrift.land||'_'||kdn_vertrnr_001, " +//87
+                "'JA', " +                         //88
+                "'Ja' AS Expr50, " +                           //89
+                "'Ja' AS Expr51, " +                           //90
+                "'@' AS Expr52, " +                            //91 
+                "'0'as 'Sammellieferschein', " +               //92 
+                "kdn_x_ust_wann," +                            //93
+                "'' as 'Bankverbindung'," +
+                "'Ja' as 'Default'," +
+                "'@' ," +
+                "'1' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "kdn_rekopie," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' as 'Versandkalender'," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@' ," +
+                "'@', " +
+                "'@' " +           //145
+                "FROM kunden, anschrift,persktn,historie " +
+                "WHERE (persktn.pkt_ansnr = anschrift.ansnr) " +
+                "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +
+                "and kdn_typ = 'D' " +
+                "and his_kdnlfdnr = his_kdnlfdnr  " +
                           "and (kunden.kdn_sperrkz = 0) " +
                           "and kdn_typ = 'D' " +
                           "and kdn_le_redat > {0} " +
