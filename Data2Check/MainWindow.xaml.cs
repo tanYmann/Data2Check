@@ -154,14 +154,7 @@ namespace Data2Check
                 Directory.CreateDirectory(@"c:\tmp\logs");
             }
 
-            if (!File.Exists(@"c:\tmp\logs\D2CLog.txt"))
-            {
-                File.Create(@"c:\tmp\logs\D2CLog.txt");
-            }
-            using (StreamWriter writer = File.AppendText(@"c:\tmp\logs\D2CLog.txt"))
-            {
-                writer.WriteLine($"{DateTime.Now} : {line}");
-            }
+
         }
 
         async Task<bool> checkOdbc(OdbcConnection connection)
@@ -954,12 +947,12 @@ namespace Data2Check
                     rowKd[52] = "Ja";
                 }
 
-                if (rowKd[73].ToString() == "N")
+                if (rowKd[73].ToString() == "J")
                 {
                     rowKd[73] = "Ja";
                 }
 
-                else if (rowKd[73].ToString() == "J")
+                else if (rowKd[73].ToString() == "N")
                 {
                     rowKd[73] = "Nein";
                 }
@@ -1472,9 +1465,12 @@ namespace Data2Check
 
                 else if (rowKd[73].ToString() == "J")
                 {
-                    rowKd[73] = "Nein";
+                    rowKd[73] = "Ja";
                 }
-
+                else
+                {
+                    rowKd[73] = "Ja";
+                }
                 if (rowKd[78] != null && Dictionaries.VADict.ContainsKey(rowKd[78].ToString()))
                 {
                     rowKd[78] = Dictionaries.VADict[rowKd[78].ToString()];

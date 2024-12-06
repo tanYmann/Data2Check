@@ -1790,7 +1790,8 @@ namespace Data2Check
             { "26", "001"},
             { "27", "001"},
             { "0",  "001"},
-            { "107","076" }
+            { "107","076" },
+            {"111","080" }
         };
 
         // Dictionary zbdnr zu Zahlungsziele

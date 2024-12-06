@@ -26,15 +26,8 @@ namespace Data2Check
                 Directory.CreateDirectory(@"c:\tmp\logs");
             }
 
-            //Prüfen ob Datei existiert, gegebenenfalls erstellen
-            if (!File.Exists(@"c:\tmp\logs\D2CLog.txt"))
-            {
-                File.Create(@"c:\tmp\logs\D2CLog.txt");
-            }
-            using (StreamWriter writer = File.AppendText(@"c:\tmp\logs\D2CLog.txt"))
-            {
-                writer.WriteLine($"{DateTime.Now} : {line}");
-            }
+
+
         }
 
         //Tabelle schreiben
