@@ -651,7 +651,8 @@ namespace Data2Check
                     "'@' ," +
                     "'@' ," +
                     "'@', " +
-                    "'@' " +           //145
+                    "'@', " +
+                    "'@' " +           //146
                     "FROM kunden, anschrift " +
                     ",persktn " +
                     ",historie " +
@@ -868,7 +869,7 @@ namespace Data2Check
                 else if (rowKd[40].ToString() == "F" | rowKd[3].ToString() == "FR")
                 {
                     rowKd[7] = "Mesdames, Messieurs";
-                    rowKd[40] = "E";
+
                 }
                 else if (rowKd[40].ToString() == "E")
                 {
@@ -877,16 +878,10 @@ namespace Data2Check
                 else if (rowKd[40].ToString() == "DU")
                 {
                     rowKd[7] = "Geachte dames en heren";
-                    rowKd[40] = "E";
                 }
                 else
                 {
                     rowKd[7] = rowKd[7];
-                }
-
-                if (rowKd[40].ToString() != "D")
-                {
-                    rowKd[40] = "E";
                 }
 
                 rowKd[50] = operations.RemoveWhiteSpace(rowKd[50].ToString());
@@ -1173,7 +1168,8 @@ namespace Data2Check
                     "'@' ," +
                     "'@' ," +
                     "'@', " +
-                    "'@' " +           //145
+                    "'@'," +
+                    "'@' " +           //146
                     "FROM kunden, anschrift " +
                     "WHERE (anschrift.ansnr = kunden.kdn_lfdnr) " +
                     "and kdn_typ = 'D' " +
