@@ -72,7 +72,7 @@ namespace Data2Check
                         table.Load(reader);
                     }
                 }
-            }
+            } 
 
             return table;
         }
@@ -978,7 +978,8 @@ namespace Data2Check
                 "'@' ," +
                 "'@' ," +
                 "'@', " +
-                "'@' " +           //145
+                "'@'," +
+                "'@' " +           //146
                 "FROM kunden, anschrift,persktn,historie " +
                 "WHERE (persktn.pkt_ansnr = anschrift.ansnr) " +
                 "AND (anschrift.ansnr = kunden.kdn_lfdnr) " +

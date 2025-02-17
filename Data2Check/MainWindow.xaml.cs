@@ -73,6 +73,86 @@ namespace Data2Check
             Task.Run(() => SetupCountdownTimer());
         }
 
+        public string GetNrVerb(string name, string name2, string vbNr)
+        {
+            string pattern = @"\d*\d";
+
+            Regex regex = new Regex(pattern);
+
+            if (vbNr == "119516")
+            {
+                name = name.Replace(" ", "");
+
+                if (name.Contains("L345776M"))
+                {
+                    name = name.Replace("L345776M", "");
+                }
+                else
+                {
+                    name = name2;
+                }
+
+                name = name.Replace(" ", "");
+                name = name.Replace("L345776M", "");
+                name = regex.Match(name).Value.ToString();
+            }
+            else if (vbNr == "138145")
+            {
+                string nordwest = "Nordwest";
+
+                if (!name.Contains(nordwest))
+                {
+                    name = name2;
+                }
+                try
+                {
+                    name = name.Substring(0, name.LastIndexOf('-'));
+                    name = regex.Match(name).Value.ToString();
+                }
+
+                catch (Exception e)
+                {
+                    if (e.InnerException != null)
+                    {
+                        WriteLogFile(e.InnerException.Message);
+                    }
+                    else
+                    {
+                        WriteLogFile(e.Message);
+                    }
+                    name = "";
+                }
+                name = "";
+
+            }
+            else if (vbNr == "119433")
+            {
+                string evb = "##";
+
+                if (!name.Contains(evb))
+                {
+                    name = name2;
+                }
+
+                name = regex.Match(name).Value.ToString();
+            }
+            else if (vbNr == "119693")
+            {
+                string evb = "ZR0135VL74171AH";
+
+                if (!name.Contains("0135"))
+                {
+                    name = name2;
+                }
+
+                name = name.Replace(" ", "");
+                name = name.Replace(evb, "");
+                name = regex.Match(name).Value.ToString();
+            }
+
+            return name;
+        }
+
         private void WriteLogFile(string line)
         {
             using (StreamWriter writer = File.AppendText(LogFile))
@@ -576,7 +656,7 @@ namespace Data2Check
                     "'@' AS Expr36, " +
                     "kdn_zbnr, " +                                  //71    
                     "kunden.kdn_kredlimit, " +                      //72
-                    "kdn_c_ohneklm, " +                             //73
+                    "'JA', " +                             //73
                     "'2' AS 'Mahnverfahren', " +                    //74
                     "'@' AS Expr39, " +                             //75
                     "'@' AS Expr40, " +                             //76
@@ -594,7 +674,7 @@ namespace Data2Check
                     "'@' as 'l. Auskunft', " +
                     "kunden.kdn_x_adrsel, " +                       //86
                     "kdn_x_adrsel||'_'||anschrift.land||'_'||kdn_vertrnr_001, " +//87
-                    "kdn_x_rabattausw, " +                         //88
+                    "'JA', " +                         //88
                     "'Ja' AS Expr50, " +                           //89
                     "'Ja' AS Expr51, " +                           //90
                     "'@' AS Expr52, " +                            //91 
@@ -802,12 +882,12 @@ namespace Data2Check
                 }
 
 
-                if (rowKd[56].ToString() == "119516" | rowKd[56].ToString() == "138145" | rowKd[56].ToString() == "119433" | rowKd[56].ToString() == "119693")
+                if (rowKd[56].ToString() != "")
                 {
-                    rowKd[60] = operations.GetNrVerb(rowKd[11].ToString(), rowKd[12].ToString(), rowKd[56].ToString());
+                    rowKd[60] = GetNrVerb(rowKd[11].ToString(), rowKd[12].ToString(), rowKd[56].ToString());
                     rowKd[61] = "JA";
                 }
-                else
+                else if (rowKd[56] == "")
                 {
                     rowKd[61] = "";
                 }
@@ -949,7 +1029,7 @@ namespace Data2Check
 
                 else if (rowKd[73].ToString() == "N")
                 {
-                    rowKd[73] = "Nein";
+                    rowKd[73] = "JA";
                 }
 
                 if (rowKd[78] != null && Dictionaries.VADict.ContainsKey(rowKd[78].ToString()))
